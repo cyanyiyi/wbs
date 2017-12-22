@@ -1,0 +1,273 @@
+<!--
+    首页 网点详情
+    yankang
+-->
+<style lang="less">
+    .network-page {
+        // background-color: #f5f5f5;
+        padding-bottom: 200rpx;
+        .fl {
+            float: left;
+        }
+        .pr20 {
+            padding-right: 20rpx;
+        }
+        .pb20 {
+            padding-bottom: 20rpx;
+        }
+        .weui-cells:after {
+            border: none;
+        }
+        .weui-cells:before {
+            border: none;
+        }
+        .info-line-top {
+            min-height: 180rpx;
+            .logo-img {
+                margin: 20rpx 20rpx 20rpx 0;
+                width: 140rpx;
+                height: 140rpx;
+            }
+            .time-img {
+                margin: 3px 10px 3px 3px;
+                width: 22rpx;
+                height: 22rpx;
+                display: inline-block
+            }
+            .detail-info-top {
+                min-height: 32rpx;
+                font-size: 32rpx;
+                word-break: break-all;
+                overFlow:hidden;
+            }
+            .detail-info-mid {
+                height: 22rpx;
+                font-size: 22rpx;
+                margin-top: 22rpx;
+            }
+            .detail-info-bot {
+                min-height: 24rpx;
+                font-size: 24rpx;
+                margin-top: 24rpx;
+                word-break: break-all;
+                overFlow:hidden;
+            }
+        }
+        .info-line-bot {
+            height: 68rpx;
+            line-height: 68px;
+            font-size: 24rpx;
+            text-align: center;
+            .detail-info-operate {
+                width: 50%;
+                .operate-img {
+                    width: 28rpx;
+                    height: 28rpx;
+                }
+                .device-num {
+                    color: #24DBA8;
+                }
+            }
+        }
+        .user-con {
+            position: fixed;
+            right: 0;
+            bottom: 146rpx;
+            width: 120rpx;
+            height: 100rpx;
+            background-color: #ffffff;
+            box-shadow: 0px 0px 2px 1px #cccccc;
+            border-radius: 50rpx 0 0 50rpx;
+            .user-avatar {
+                width: 80rpx;
+                height: 80rpx;
+                margin: 10rpx;
+                border-radius: 40rpx;
+            }
+        }
+        .network-foot {
+            position: fixed;
+            left: 0;
+            bottom: 0;
+            width: 100%;
+            height: 100rpx;
+            font: 36rpx/100rpx normal;
+            text-align: center;
+            box-shadow: 0px 0px 2px 1px #cccccc;
+            &_default {
+                background-color: #24DBA8;
+                color: #fff;
+            }
+            &_code {
+                background-color: #ffffff;
+                color: #24DBA8;
+            }
+        }
+    }
+</style>
+
+<template>
+    <view class="page network-page pb200">
+        <repeat for="{{networkList}}" key="createTime">
+            <view class="page__bd pb20">
+                <navigator url="./network-detail?cabinetCode={{item.cabinetCode}}&strOrderStatus={{strOrderStatus}}" id="{{item.cabinetCode}}" class="weui-cells weui-cells_after-title info-box" hover-class="weui-cell_active">
+                    <view class="weui-cell info-line-top">
+                        <view class="weui-cell__hd">
+                            <!-- <image src="{{item.resUrl ? item.resUrl : '../../assets/img/orderLogo.jpg'}}" class="logo-img"></image> -->
+                            <image src="{{item.resUrl ? 'https://webcrs.ukelink.com/attachment/awsWbs/showImage?key='+item.resUrl : '../../assets/img/orderLogo.jpg'}}" class="logo-img"></image>
+                        </view>
+                        <view class="weui-cell__bd">
+                            <view class="detail-info-top">{{ item.cabinetName }}</view>
+                            <view class="detail-info-mid">
+                                <image src="../../assets/img/icon-time.png" class="time-img fl"></image>
+                                <span>{{ item.serviceTime }}</span>
+                            </view>
+                            <view class="detail-info-bot">
+                                <image src="../../assets/img/icon-address.png" class="time-img fl"></image>
+                                <span>{{item.address}}</span>
+                            </view>
+                        </view>
+                    </view>
+                    <!-- <view class="weui-cell info-line-bot">
+                        <view class="weui-cell__hd detail-info-operate">
+                            <image class="operate-img pr20" src="../../assets/img/icon-borrow.png"></image>
+                            <span class="pr20">可借</span>
+                            <span class="device-num">{{item.tmlNum}}</span>
+                        </view>
+                        <view class="weui-cell__bd detail-info-operate">
+                            <image class="operate-img pr20" src="../../assets/img/icon-return.png"></image>
+                            <span class="pr20">可还</span>
+                            <span class="device-num">{{item.rtnTmlNum}}</span>
+                        </view>
+                    </view> -->
+                </navigator>
+            </view>
+        </repeat>
+        <navigator url="../personalCenter/index" wx:if="{{loadFlag}}">
+            <view class="page__hd user-con">
+                <image src="{{userInfoAvatarUrl}}" class="user-avatar"></image>
+                <!-- <image src="../../assets/img/ym.jpg" class="user-avatar"></image> -->
+            </view>
+        </navigator>
+        <!-- <orderstatus :status.sync="orderStatus"></orderstatus> -->
+        <navigator wx:if="{{orderStatus.unfinishOrderStatus===0&&loadFlag}}" url="../borrow/borrow" class="page__hd network-foot network-foot_default">
+            借网宝
+        </navigator>
+        <view wx:elif="{{orderStatus.unfinishOrderStatus===1&&loadFlag}}" class="page__hd network-foot network-foot_code">
+            <span class="pr20">取&还机码：</span>
+            <span>{{orderStatus.returnOrBorrowCode}}</span>
+        </view>
+    </view>
+</template>
+
+<script>
+    import wepy from 'wepy';
+    import login from '../../../utils/mixins/login.js';
+    import storage from '../../../utils/storage.js';
+    import CONFIG_URL from '../../../utils/config-url.js';
+    import http from '../../../utils/request.js';
+    import config from '../../../utils/config.js';
+    // import OrderStatus from './order-status';
+
+    export default class Home extends wepy.page {
+        mixins = [login];
+        config = {
+            navigationBarTitleText: '全部网点'
+        };
+        components = {
+            // orderstatus: OrderStatus
+        }
+        data = {
+            loadFlag:false,
+            networkList: [],
+            userInfoAvatarUrl: '',
+            orderStatus: {
+                unfinishOrderStatus: 0,
+                returnOrBorrowCode: ''
+            },
+            strOrderStatus: ''
+        };
+        /**
+         * WePY中的methods属性只能声明页面wxml标签的bind、catch事件
+         */
+        methods = {};
+        /**
+         * 普通自定义方法在methods对象外声明，与methods平级
+         */
+        queryList() {
+            const that = this;
+            return http.post({
+                path: CONFIG_URL.network.queryList,
+                data: {
+                    currentPage: 1,
+                    perPageCount: 10,
+                    status: 'NORMAL'
+                }
+            }).then(d => {
+                that.networkList = d.data.dataList;
+                return true;
+            }, d => {
+
+            });
+        }
+        queryUnFinishedOrder() {
+            return http.post({
+                path: CONFIG_URL.order.queryUnFinishedOrder,
+                data: {}
+            }).then(d => {
+                const firstData = d.data[0];
+                /**
+                 * unfinishOrderStatus = 0, 借网宝
+                 * unfinishOrderStatus = 1, 取机码
+                 * unfinishOrderStatus = 2, 还机码
+                 */
+                if (firstData) {
+                    switch (firstData.status) {
+                    case 'WAIT_PICKUP':
+                    case 'WAIT_RETURN':
+                        this.orderStatus = {
+                            unfinishOrderStatus: 1,
+                            returnOrBorrowCode: firstData.deliveryCode
+                        };
+                        break;
+                    case 'WAIT_CHECK':
+                        this.orderStatus = {
+                            unfinishOrderStatus: 0,
+                            returnOrBorrowCode: ''
+                        };
+                        break;
+                    default:
+                        this.orderStatus = {
+                            unfinishOrderStatus: 0,
+                            returnOrBorrowCode: ''
+                        };
+                        break;
+                    }
+                } else {
+                    this.orderStatus = {
+                        unfinishOrderStatus: 0,
+                        returnOrBorrowCode: ''
+                    };
+                }
+                this.strOrderStatus = JSON.stringify(this.orderStatus);
+                return true;
+            }, d => {
+                this.orderStatus.unfinishOrderStatus = 0;
+                this.orderStatus.returnOrBorrowCode = '';
+                this.strOrderStatus = JSON.stringify(this.orderStatus);
+                return true;
+            });
+        }
+        async onLoad(params) {
+            await this.$parent.auth();
+            await this.queryList();
+            this.userInfoAvatarUrl = storage.user.get().avatarUrl;
+            this.loadFlag = true;
+            this.$apply();
+        }
+        async onShow() {
+            await this.queryUnFinishedOrder();
+            this.$apply();
+        }
+    }
+</script>

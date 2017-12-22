@@ -1,0 +1,128 @@
+<!--
+    常见问题
+    liuxuetao 2017/11/29
+ -->
+<style lang="css" src="./style.css"></style>
+<style lang="scss">
+    page {
+        background-color: #ffffff;
+        box-sizing: border-box;
+    }
+</style>
+<template>
+    <view class="faq-page">
+        <view class="faq-list">
+            <view class="faq-item" wx:for="{{faqList}}" wx:for-index="idx" wx:for-item="item" wx:key="key" bindtap="openDetail({{idx}})">
+                <view class="item-t">
+                    <text>{{ item.name }}</text>
+                    <image src="{{ item.close }}"></image>
+                </view>
+                <view class="item-line"></view>
+                <view class="item-con" hidden="{{ item.isClose }}">
+                    <!-- {{item.list}} -->
+                    <view wx:for="{{ item.list }}" wx:for-index="idx" wx:for-item="it" wx:key="key">{{ it }}</view>
+                </view>
+            </view>
+        </view>
+        <view class="footer">
+            <view class="footer-wrap">
+                <view @tap='tel' class="tel-btn">
+                    <image src="{{ images.concat }}"></image>
+                    <text>{{ i18n.concat }}</text>
+                </view>
+            </view>
+        </view>
+    </view>
+</template>
+
+<script>
+import wepy from 'wepy';
+import request from '../../../utils/request';
+import CONFIG_URL from '../../../utils/config-url';
+
+export default class faq extends wepy.page {
+    config = {
+        navigationBarTitleText: '常见问题'
+    };
+    data = {
+        faqList:[],
+        i18n:{
+            concat:'联系客服'
+        },
+        images:{
+            concat:'../../assets/img/faq-concat.png',
+            close:'../../assets/img/faq-open.png',
+            open:'../../assets/img/faq-close.png',
+            current:'../../assets/img/faq-open.png',
+        },
+        tel:'88888888',
+        select:''
+    };
+    methods = {
+        openDetail(idx){
+            this.faqList[idx].isClose = !this.faqList[idx].isClose;
+            this.faqList[idx].close = (this.faqList[idx].isClose)?this.images.close:this.images.open;
+        },
+        tel(){
+            /*请求电话号码 拨打*/
+            wx.makePhoneCall({
+                phoneNumber: this.tel // tel字符串类型，不能使数字
+            })
+        }
+    };
+    loadList(){
+        const params = {
+            type: 'QUESTION',
+            session :'e721fb764ddf7b1cb9125c03f99a610e'
+        };
+        request.post({
+          path: CONFIG_URL.faq.queryList,
+          data: params,
+          requiresAuth: false
+        }).then((res)=>{
+            //增加控制显示
+            this.faqList = [];
+            let result = res.data;
+            res.data.forEach((item,idx) =>{
+                item.isClose = true;
+                item.close = this.images.close;
+                item.list = item.value.split(/\n/mg);//增加控制换行
+                this.faqList.push(item);
+            })
+            this.$apply();
+        },(err)=>{
+            wepy.showModal({
+                content: err.resultDesc,
+                showCancel: false
+            });
+        })
+    };
+    getConcat(){
+        const params = {
+            type: 'PARAM',
+            key:'SERVICE_TELEPHONE'
+        };
+        request.post({
+          path: CONFIG_URL.common.queryList,
+          data: params,
+          requiresAuth: false
+        }).then((res)=>{
+            if(res.data.length){
+                this.tel = res.data[0].value;
+            }
+        },(err)=>{
+            wepy.showModal({
+                content: err.resultDesc,
+                showCancel: false
+            });
+        })
+    }
+    async onLoad(){
+        await this.$parent.auth();
+        this.faqList = [];
+        this.loadList();
+        this.getConcat();
+        this.tel = this.$parent.globalData.cusTel;
+    }
+};
+</script>

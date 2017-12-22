@@ -1,0 +1,124 @@
+<!--
+    账户充值
+    cheng.feng 2017/11/20
+ -->
+<style lang="css" src="./style.css"></style>
+
+<template>
+    <view class="bg-white mb18 recharge">
+        <view class="balance {{ isMinus ? 'minus' : '' }}">
+            <view class="p-title">
+                <text>账户余额</text>
+                <view class="p-tips">{{tips}}</view>
+            </view>
+            <view class="p-money p-bottom">￥ {{ balance }}</view>
+        </view>
+        <view class="recharge-money">
+            <view class="p-title">请选择充值金额</view>
+            <view class="p-flex">
+                <view wx:for="{{ amounts }}" wx:for-item="item" wx:key="idx" class="p-option {{amount == item.value ? 'curr' : ''}}" @tap="chosse({{item}})">
+                    {{ item.value + "元"}}
+                    <text>{{ item.name }}</text>
+                </view>
+            </view>
+        </view>
+    </view>
+    <view class="bg-white mb100">
+        <view class="payment-select">
+            <image class="p-wechat" src="../../assets/img/wechat.png"></image>
+            <text>微信支付</text>
+            <image class="p-selected" src="../../assets/img/checked.png"></image>
+        </view>
+    </view>
+    <view class="footer-button">
+        <button type="primary" class="btn-confirm" @tap="btn" loading="{{loading}}">确认支付</button>
+    </view>
+</template>
+
+<script>
+import wepy from 'wepy';
+import payment from '../common/payment';
+import http from '../../../utils/request';
+import api from '../../../utils/config-url';
+
+export default class extends wepy.page {
+    config = {
+        navigationBarTitleText: '账户充值'
+    };
+    data = {
+        loading: false,
+        pageState: "show",
+        isMinus: false,    // 余额是否为负数
+        balance: 0,
+        amount: 0,
+        amounts: [],
+        tips: "余额为负时不能借用网宝",
+    };
+    methods = {
+        chosse(item) {
+            this.amount = item.value;
+        },
+        btn() {
+            if (this.loading) return;
+            this.loading = true;
+
+            payment.payment({
+                rechargeType: "TOPUP", // 充值
+                amount: this.amount * 100
+            }).then(d => {
+                let that = this;
+                that.loading = false;
+
+                wx.showModal({
+                    content: "充值成功，金额可能延迟到账，请耐心等待。如有疑问，请联系客服。",
+                    showCancel: false,
+                    complete() {
+                        wx.navigateBack({ delta: that.delta });
+                    }
+                });
+            }, d => {
+                if (this.pageState === "show") {
+                    let msg = "充值失败";
+                    if(d && d.resultCode) msg += ", 错误码" + d.resultCode;
+                    wx.showModal({
+                        content: msg,
+                        showCancel: false
+                    });
+                }
+                this.loading = false;
+                this.$apply();
+            });
+        }
+    };
+    onLoad(params) {
+        console.warn("本页面需要从上个页面通过url传参数balance(余额)!");
+
+        let balance = Number(params.balance || 0);
+
+        if (balance < 0) {
+            this.isMinus = true;
+        }
+
+        this.balance = (balance / 100).toFixed(2);
+        this.delta = Number(params.delta) || 1;
+
+        // 获取充值金额列表
+        http.post({
+            path: api.common.queryList,
+            data: { type: "TOPUP" }
+        }).then(d => {
+            // d.data[0].value = 0.01;
+
+            this.amounts = d.data;
+            this.amount = d.data[0].value;
+            this.$apply();
+        });
+    };
+    onShow() {
+        this.pageState = "show";
+    };
+    onHide() {
+        this.pageState = "hide";
+    };
+};
+</script>

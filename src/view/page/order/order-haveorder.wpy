@@ -1,0 +1,304 @@
+<template>
+    <view class="orders_page">
+        <view class="orders_img">
+            <image src="../../assets/img/banner.jpg" class="orders_img_logo"></image>
+        </view>
+        <view class="orders_content">
+            <view class="mark orders_order_number">
+                <view class="orders_order_number_key">{{title.orderNumber}}</view>
+                <view class="orders_order_number_value">{{overOrders.orderSN}}</view>
+                <view class="orders_order_number_status">{{overOrders.status}}</view>
+            </view>
+            <view class="orders_imaginary_line"></view>
+            <view class="mark orders_rent_time">
+                <view class="orders_rent_time_key">{{title.rentTime}}</view>
+                <view class="orders_rent_time_value">{{overOrders.deliveryTime}}</view>
+            </view>
+            <view class="mark orders_rent_site">
+                <view class="orders_rent_site_key">{{title.rentSite}}</view>
+                <view class="orders_rent_site_value">{{overOrders.cabinetName}}</view>
+            </view>
+            <view class="orders_imaginary_line"></view>
+            <view class="mark orders_get_return">
+                <view class="orders_get_return_key">{{title.gRNumber}}</view>
+                <view class="orders_get_return_value">{{overOrders.deliveryCode}}</view>
+            </view>
+            <view class="orders_imaginary_line orders_imaginary_top"></view>
+            <view class="orders_tip">{{title.ordersTip}}</view>
+            <view class="orders_cancle">
+                <view @tap="cancle">{{title.ordersCancle}}</view>
+            </view>
+        </view>
+    </view>
+</template>
+<script>
+    import wepy from 'wepy'
+    import request from '../../../utils/request'
+    import CONFIG_URL from '../../../utils/config-url'
+    import tips from '../../../utils/tips'
+    export default class extends wepy.page {
+        /* 标题 */
+        config = {
+            navigationBarTitleText: '订单详情'
+        };
+        data = {
+            title:{
+                orderNumber:"订单号码",
+                rentTime:"租借时间",
+                rentSite:"租借地点",
+                gRNumber:"取/还机码",
+                ordersTip:"下单7天内有效，过时自动取消",
+                ordersCancle:"取消订单"
+            },
+            // 订单状态字典
+            status_dictionary:{
+                WAIT_PICKUP:'已下单',//待取货
+                WAIT_RETURN:'借用中',//待归还
+                WAIT_CHECK:'待核查',
+                FINISHED:'已完成',
+                CANCELED:'已取消',
+                ABNORMAL:'异常结束',
+            },
+            overOrders:{},
+            orderSN:'',
+            resultCode:'',
+            resultDesc:''
+
+        };
+        methods = {
+            cancle:function(){
+                let that = this;
+                that.cancleOrder().then(function(){
+                    if(that.resultCode == '00000000'){
+                        tips.success(that.resultDesc);
+                        wx.navigateBack({delta: 1});
+                    }else{
+                        tips.error(that.resultDesc);
+                    }
+                })
+            },
+        };
+        formatTime = function(timeStamp){
+            let date = new Date();
+            date.setTime(timeStamp);
+            let y = date.getFullYear();
+            let m = date.getMonth() + 1;
+            m = m < 10 ? ('0' + m) : m;
+            let d = date.getDate();
+            d = d < 10 ? ('0' + d) : d;
+            let h = date.getHours();
+            h = h < 10 ? ('0' + h) : h;
+            let minute = date.getMinutes();
+            let second = date.getSeconds();
+            minute = minute < 10 ? ('0' + minute) : minute;
+            second = second < 10 ? ('0' + second) : second;
+            return y + '-' + m + '-' + d+' '+h+':'+minute+':'+second;
+        };
+        cancleOrder = function(){
+            let that = this,
+                data = {orderSN: that.orderSN};
+            return request.post({
+                path: CONFIG_URL.order.cancleOrder,
+                data,
+                requiresAuth: false
+            }).then(res=>{
+                that.resultCode = res.resultCode;
+                that.resultDesc = res.resultDesc;
+                that.$apply();
+            },res=>{
+                that.resultCode = res.resultCode;
+                that.resultDesc = res.resultDesc;
+                that.$apply();
+            })
+
+        };
+        async onLoad(option){
+            let that = this,
+                data = {orderSN:option.orderSN},
+                overOrders = {};
+            that.orderSN = option.orderSN;
+            that.$apply();
+            that.overOrders = await request.post({
+                path: CONFIG_URL.order.queryOrderDetail,
+                data,
+                requiresAuth: false
+            }).then((res)=>{
+                overOrders = res.data;
+                overOrders.status = that.status_dictionary[overOrders.status] || '';
+                if(overOrders.rentAmount !==null && overOrders.rentAmount!==undefined &&　overOrders.rentAmount>=0){
+                    if(parseFloat((overOrders.rentAmount/100).toFixed(2)) > 0.00){
+                        overOrders.rentAmount = '￥'+(overOrders.rentAmount/100).toFixed(2);
+                    }else{
+                        overOrders.rentAmount = '￥' + 0;
+                    }
+                }else{
+                    overOrders.rentAmount = '';
+                }
+                if(overOrders.deliveryTime){
+                    overOrders.deliveryTime = that.formatTime(overOrders.deliveryTime);
+                }else{
+                    overOrders.deliveryTime = '';
+                }
+                overOrders.cabinetName = overOrders.cabinetName || '';
+                that.overOrders = overOrders;
+                that.$apply();
+            },(error)=>{
+                return error;
+            })
+        }
+    }
+</script>
+<style lang="scss">
+    .mark wx-view{
+        display: inline-block;
+    }
+    .orders_page{
+        width: 750rpx;
+    }
+    .orders_content{
+        height: 704rpx;
+        background-color: #ffffff;
+    }
+    .orders_img{
+        height: 500rpx;
+        width: 100%;
+    }
+    .orders_img_logo{
+        height: 100%;
+        width: 100%;
+    }
+    .orders_order_number{
+        margin-bottom: 40rpx;
+    }
+    .orders_imaginary_line{
+        margin-left: 30rpx;
+        box-shadow:inset 0 -1rpx 0 0 rgba(224,224,224,0.50);
+        width:720rpx;
+        height:2rpx;
+    }
+    .orders_order_number_key{
+        height: 28rpx;
+        margin-top: 40rpx;
+        margin-left: 44rpx;
+        font-family:PingFangSC-Regular;
+        font-size:28rpx;
+        color:#888888;
+        letter-spacing:0;
+        line-height:28rpx;
+    }
+    .orders_order_number_value{
+        height: 28rpx;
+        margin-top: 40rpx;
+        margin-left: 20rpx;
+        font-family:PingFangSC-Semibold;
+        font-size:28rpx;
+        color:#1e1e1e;
+        letter-spacing:0;
+        line-height:28rpx;
+    }
+    .orders_order_number_status{
+        height: 28rpx;
+        margin-top: 40rpx;
+        margin-right: 30rpx;
+        float: right;
+        font-family:PingFangSC-Regular;
+        font-size:28rpx;
+        color:#24dba8;
+        letter-spacing:0;
+        line-height:28rpx;
+    }
+    .orders_rent_time{}
+    .orders_rent_time_key{
+        height: 28rpx;
+        margin-top: 30rpx;
+        margin-left: 44rpx;
+        font-family:PingFangSC-Regular;
+        font-size:28rpx;
+        color:#888888;
+        letter-spacing:0;
+        line-height:28rpx;
+    }
+    .orders_rent_time_value{
+        height: 28rpx;
+        margin-top: 30rpx;
+        margin-left: 20rpx;
+        font-family:PingFangSC-Semibold;
+        font-size:28rpx;
+        color:#1e1e1e;
+        letter-spacing:0;
+        line-height:28rpx;
+    }
+    .orders_rent_site{
+        margin-bottom: 30rpx;
+    }
+    .orders_rent_site_key{
+        height: 28rpx;
+        margin-top: 30rpx;
+        margin-left: 44rpx;
+        font-family:PingFangSC-Regular;
+        font-size:28rpx;
+        color:#888888;
+        letter-spacing:0;
+        line-height:28rpx;
+    }
+    .orders_rent_site_value{
+        height: 28rpx;
+        margin-top: 30rpx;
+        margin-left: 20rpx;
+        font-family:PingFangSC-Semibold;
+        font-size:28rpx;
+        color:#1e1e1e;
+        letter-spacing:0;
+        line-height:28rpx;
+    }
+    .orders_get_return{
+        margin-bottom: 40rpx;
+    }
+    .orders_get_return_key{
+        height: 28rpx;
+        margin-top: 40rpx;
+        margin-left: 30rpx;
+        font-family:PingFangSC-Regular;
+        font-size:28rpx;
+        color:#888888;
+        letter-spacing:0;
+        line-height:28rpx;
+    }
+    .orders_get_return_value{
+        height: 28rpx;
+        margin-top: 40rpx;
+        margin-left: 20rpx;
+        font-family:PingFangSC-Semibold;
+        font-size:28rpx;
+        color:#1e1e1e;
+        letter-spacing:0;
+        line-height:28rpx;
+    }
+    .orders_imaginary_top{
+        margin-top: 30rpx;
+    }
+    .orders_tip{
+        height: 26rpx;
+        margin-top: 165rpx;
+        /*margin-left: 200rpx;*/
+        /*float: left;*/
+        font-family:PingFangSC-Regular;
+        font-size:26rpx;
+        color:#b4b4b4;
+        letter-spacing:0;
+        line-height:26rpx;
+        text-align:center;
+    }
+    .orders_cancle{
+        height: 100rpx;
+        width: 100%;
+        bottom: 0;
+        position: fixed;
+        background-color: #24dba8;
+        line-height: 100rpx;
+        font-size:32rpx;
+        color: white;
+        letter-spacing:0;
+        text-align: center;
+    }
+</style>

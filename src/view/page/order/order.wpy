@@ -1,0 +1,222 @@
+<template>
+    <repeat for="{{orderList}}" key="index">
+        <navigator url="./{{item.url}}?orderSN={{item.orderSN}}">
+            <view class="order_page">
+                <view class="mark">
+                    <view class="order_page_time">{{item.createTime}}</view>
+                    <view class="order_page_status {{item.fontClass}}">{{item.status}}</view>
+                </view>
+                <view class="order_page_site">{{item.cabinetName}}</view>
+                <view class="mark">
+                    <view class="order_page_price">{{item.rentAmount}}</view>
+                    <image class="order_page_icon" src="{{expendImg}}"></image>
+                </view>
+                <view class="imaginary_line"></view>
+            </view>
+        </navigator>
+    </repeat>
+    <view wx:if="{{noOrdersFlag}}">
+        <view>
+            <image class="no_orders_img" src="{{noOrdersImg}}"></image>
+        </view>
+        <view class="no_orders_tip">{{noOrders}}</view>
+    </view>
+</template>
+<script>
+    import wepy from 'wepy';
+    import request from '../../../utils/request'
+    import CONFIG_URL from '../../../utils/config-url'
+    import tips from '../../../utils/tips'
+    export default class extends wepy.page {
+        config = {
+            navigationBarTitleText: '我的订单'
+        };
+        data = {
+            orderList:[],
+            // 订单状态字典表
+            status_dictionary:{
+                WAIT_PICKUP:'已下单',//待取货
+                WAIT_RETURN:'借用中',//待归还
+                WAIT_CHECK:'待核查',
+                FINISHED:'已完成',
+                CANCELED:'已取消',
+                ABNORMAL:'异常结束',
+            },
+            //订单状态对应路由字典表
+            status_url_dictionary:{
+                WAIT_PICKUP:'order-haveorder',
+                WAIT_RETURN:'order-borrowed',
+                WAIT_CHECK:'order-verified',
+                FINISHED:'order-finished',
+                CANCELED:'order-canceled',
+                ABNORMAL:'order-abnormaled',
+            },
+            status_color_dictionary:{
+                WAIT_PICKUP:'order_color_borrowed',
+                WAIT_RETURN:'order_color_borrowed',
+                WAIT_CHECK:'order_color_borrowed',
+                FINISHED:'order_color_cancle',
+                CANCELED:'order_color_cancle',
+                ABNORMAL:'order_color_normaled',
+            },
+            noOrders:"抱歉，您还没有订单",
+            noOrdersFlag: false,
+            noOrdersImg:"../../assets/img/noOrders.png",
+            expendImg:"../../assets/img/expend.png",
+        };
+        methods = {
+            /**
+             * pan.zhou
+             * @param {number} 时间戳
+             * @return {string} Y-M-D时间格式
+             */
+            formatTime:function(timeStamp){
+                let date = new Date();
+                date.setTime(timeStamp);
+                let y = date.getFullYear();
+                let m = date.getMonth() + 1;
+                m = m < 10 ? ('0' + m) : m;
+                let d = date.getDate();
+                d = d < 10 ? ('0' + d) : d;
+                return y + '-' + m + '-' + d;
+            },
+        };
+        async orderTip(content){
+            let that = this;
+            let res = await wepy.showModal({
+                title:'error!',
+                content,
+                confirmText:'重试'
+            });
+            if(res.confirm){
+                that.queryOrdersList();
+            }else{
+                wx.navigateBack({delta: 1})
+            }
+        };
+        async queryOrdersList(){
+            let that = this,
+                data = {},
+                orderList = [];
+            that.orderList = await request.post({
+                path: CONFIG_URL.order.queryOrdersList,
+                data,
+                requiresAuth: false
+            }).then((res)=>{
+                orderList = res.data.dataList;
+                if(Object.prototype.toString.call(orderList) == '[object Array]' && orderList.length>0){
+                    for(let i = 0;i<orderList.length;i++){
+                        orderList[i].createTime = that.methods.formatTime(orderList[i].createTime) || '';
+                        if(orderList[i].rentAmount !== null && orderList[i].rentAmount !== undefined && orderList[i].rentAmount >=0){
+                            orderList[i].rentAmount = '￥'+(orderList[i].rentAmount/100).toFixed(2);
+                        }else{
+                            orderList[i].rentAmount = '';
+                        }
+                        orderList[i].cabinetName = orderList[i].cabinetName || '';
+                        orderList[i].url = that.status_url_dictionary[orderList[i].status] || '';
+                        orderList[i].fontClass = that.status_color_dictionary[orderList[i].status] || '';
+                        orderList[i].status = that.status_dictionary[orderList[i].status] || '';
+                    }
+                    that.orderList = orderList;
+                    that.noOrdersFlag = false;
+                    that.$apply();
+                }else{
+                    that.noOrdersFlag = true;
+                    that.$apply();
+                    //that.orderTip("网络错误!");
+                }
+            },(error)=>{
+                that.orderTip(error.resultDesc);
+            })
+        }
+        // async onLoad(){
+        // }
+        async onShow(){
+            await this.$parent.auth();
+            this.queryOrdersList();
+        }
+    }
+</script>
+<style lang="scss">
+    .mark wx-view{
+        display: inline-block;
+    }
+    .order_page{
+        background:#ffffff;
+        height:206rpx;
+        width: 750rpx;
+    }
+    .imaginary_line{
+        margin-left: 30rpx;
+        margin-top: 2rpx;
+        height:2rpx;
+        box-shadow:inset 0 -1rpx 0 0 rgba(224,224,224,0.50);
+    }
+    .order_page_time{
+        width: 220rpx;
+        height: 48rpx;
+        margin-top: 30rpx;
+        padding: 10rpx 33rpx 10rpx 30rpx;
+        background:#f0f0f0;
+        font-family:PingFangSC-Semibold;
+        font-size:28rpx;
+        color:#333333;
+        letter-spacing:0;
+        line-height:48rpx;
+        border-radius:0 30rpx 30rpx 0;
+    }
+    .order_page_status{
+        height: 28rpx;
+        margin-top: 40rpx;
+        margin-right: 30rpx;
+        float: right;
+        font-family:PingFangSC-Regular;
+        font-size:28rpx;
+        letter-spacing:0;
+        line-height:28rpx;
+        text-align:right;
+    }
+    .order_page_site{
+        height: 28rpx;
+        margin-top: 20rpx;
+        margin-left: 30rpx;
+        font-family:PingFangSC-Regular;
+        font-size:24rpx;
+        color:#888888;
+        letter-spacing:0;
+        line-height:28rpx;
+    }
+    .order_page_price{
+        width: 102rpx;
+        height: 28rpx;
+        margin-top: 20rpx;
+        margin-left: 30rpx;
+        font-family:PingFangSC-Semibold;
+        font-size:28rpx;
+        color:#888888;
+        letter-spacing:0;
+        line-height:28rpx;
+    }
+    .order_page_icon{
+        height: 15rpx;
+        width: 23rpx;
+        margin-top: 23rpx;
+        margin-left: 570rpx;
+    }
+    .order_color_cancle{color:#c8c8c8;}
+    .order_color_borrowed{color:#24dba8;}
+    .order_color_normaled{color:#ff8300;}
+    .no_orders_img{
+        width: 316rpx;
+        height: 177rpx;
+        margin: 442rpx 216rpx 0rpx 216rpx;
+    }
+    .no_orders_tip{
+        height: 40rpx;
+        margin: 41rpx 252rpx 634rpx 252rpx;
+        font-family:PingFangSC-Regular;
+        font-size:28rpx;
+        color:#888888;
+        letter-spacing:-0.68rpx;
+    }
+</style>

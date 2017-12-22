@@ -1,0 +1,103 @@
+<!-- 样式文件，可内嵌，也可单独分出 -->
+<style lang="scss" src="./style.css"></style>
+
+<template>
+    <view>
+        <image class='per_center_banner' src="{{imgUrl.bannerBg}}"/>
+
+        <section class="bgimage">
+            <image src="{{userInfo.avatarUrl}}" class='userIcon'></image>
+            <view class="phoneStyle">{{userInfo.mobilePhone}}</view>
+        </section>
+        <view class="weui-cells_after-title">
+            <navigator url="../myWallet/my-wallet" class="weui-cell weui-cell_access" hover-class="weui-cell_active" open-type="navigate">
+                <view class="weui-cell__hd">
+                    <image src="{{imgUrl.walletIcon}}" style="margin-right: 5px;vertical-align: middle;width:20px; height: 20px;"></image>
+                </view>
+                <view class="weui-cell__bd">{{text.walletText}}</view>
+                <view class="weui-cell__ft weui-cell__ft_in-access"></view>
+            </navigator>
+            <navigator url="../order/order" class="weui-cell weui-cell_access" hover-class="weui-cell_active">
+                <view class="weui-cell__hd">
+                    <image src="{{imgUrl.orderIcon}}" style="margin-right: 5px;vertical-align: middle;width:20px; height: 20px;"></image>
+                </view>
+                <view class="weui-cell__bd">{{text.orderText}}</view>
+                <view class="weui-cell__ft weui-cell__ft_in-access"></view>
+            </navigator>
+            <navigator url="../faq/faq" class="weui-cell weui-cell_access" hover-class="weui-cell_active">
+                <view class="weui-cell__hd">
+                    <image src="{{imgUrl.questionIcon}}" style="margin-right: 5px;vertical-align: middle;width:20px; height: 20px;"></image>
+                </view>
+                <view class="weui-cell__bd">{{text.questionText}}</view>
+                <view class="weui-cell__ft weui-cell__ft_in-access"></view>
+            </navigator>
+            <navigator url="../bindPhone/bindPhone?type=change" class="weui-cell weui-cell_access" hover-class="weui-cell_active">
+                <view class="weui-cell__hd">
+                    <image src="{{imgUrl.changeMobile}}" style="margin-right: 5px;vertical-align: middle;width:20px; height: 20px;"></image>
+                </view>
+                <view class="weui-cell__bd">{{text.changeMobileText}}</view>
+                <view class="weui-cell__ft weui-cell__ft_in-access"></view>
+            </navigator>
+
+            <!-- <navigator url="../borrow/borrow" class="weui-cell weui-cell_access" hover-class="weui-cell_active">
+                <view class="weui-cell__hd">
+                    <image src="{{imgUrl.changeMobile}}" style="margin-right: 5px;vertical-align: middle;width:20px; height: 20px;"></image>
+                </view>
+                <view class="weui-cell__bd">test确认借网宝</view>
+                <view class="weui-cell__ft weui-cell__ft_in-access"></view>
+            </navigator> -->
+        </view>
+    </view>
+</template>
+
+<script>
+    import wepy from 'wepy';
+    import request from '../../../utils/request';
+    import CONFIG_URL from '../../../utils/config-url';
+    import storage from '../../../utils/storage';
+
+    export default class Article extends wepy.page {
+        /**
+         * 标题
+         */
+        config = {
+          navigationBarTitleText: '个人中心'
+        };
+        /**
+         * 页面数据
+         */
+        data = {
+            title:'个人中心',
+            userInfo:{},
+            user:{
+                account:"150****704",
+            },
+            text:{
+                walletText:'我的钱包',
+                orderText:'我的订单',
+                questionText:'常见问题',
+                changeMobileText:'更换绑定手机'
+            },
+            imgUrl:{
+                /* 导航图 */
+                bannerBg:'../../assets/img/personalcenter-banner750.jpg',
+                /* 用户头像 */
+                userIcon:'../../assets/img/user.png',
+                /* 图标 */
+                walletIcon:'../../assets/img/walletIcon.png',
+                orderIcon:'../../assets/img/orderIcon.png',
+                questionIcon:'../../assets/img/questionIcon.png',
+                changeMobile:'../../assets/img/iphoneIcon.png'
+            }
+        }
+        onLoad(){
+            /* 获取头像信息 */
+            this.userInfo = storage.user.get();
+            if(this.userInfo){
+                let tel = this.userInfo.mobilePhone;
+                this.userInfo.mobilePhone = tel?tel.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2'):"";
+                this.$apply();
+            }
+        }
+    }
+</script>

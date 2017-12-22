@@ -1,0 +1,257 @@
+<!--
+    网点详情
+    create by yankang
+-->
+<style lang="less">
+    .network-detail {
+        background-color: #f5f5f5;
+        padding-bottom: 200rpx;
+        .fl {
+            float: left;
+        }
+        .pr20 {
+            padding-right: 20rpx;
+        }
+        .pb20 {
+            padding-bottom: 20rpx;
+        }
+        .weui-cells:after {
+            border: none;
+        }
+        .weui-cells:before {
+            border: none;
+        }
+        .detail-banner {
+            width: 100%;
+            height: 500rpx;
+        }
+        .info-line-top {
+            //height: 420rpx;
+            padding: 0 30rpx 0 30rpx;
+            .time-img {
+                width: 22rpx;
+                height: 22rpx;
+                display: inline-block
+            }
+            .detail-info-top {
+                line-height: 90rpx;
+                font-size: 32rpx;
+                word-break: break-all;
+                border-bottom: 1px solid #d9d9d9;
+                .no-server {
+                    color: #FF8300;
+                }
+            }
+            .detail-info-mid {
+                font-size: 22rpx;
+                margin-top: 22rpx;
+                border-bottom: 1px solid #d9d9d9;
+                .mid-time-box {
+                    font-size: 24rpx;
+                    line-height: 88rpx;
+                }
+                .mid-address-box {
+                    font-size: 28rpx;
+                    line-height: 68rpx;
+                }
+            }
+            .detail-info-bot {
+                height: 88rpx;
+                font-size: 28rpx;
+                line-height: 88rpx;
+            }
+        }
+        .info-line-bot {
+            height: 68rpx;
+            line-height: 68px;
+            font-size: 24rpx;
+            text-align: center;
+            .detail-info-operate {
+                width: 50%;
+                .operate-img {
+                    width: 28rpx;
+                    height: 28rpx;
+                }
+                .device-num {
+                    color: #24DBA8;
+                }
+            }
+        }
+        .network-foot {
+            position: fixed;
+            left: 0;
+            bottom: 0;
+            width: 100%;
+            height: 100rpx;
+            font: 36rpx/100rpx normal;
+            text-align: center;
+            box-shadow: 0px 0px 2px 1px #cccccc;
+            &_default {
+                background-color: #24DBA8;
+                color: #fff;
+            }
+            &_code {
+                background-color: #ffffff;
+                color: #24DBA8;
+            }
+        }
+    }
+</style>
+
+<template>
+    <view class="page network-detail pb200">
+        <view class="weui-cells weui-cells_after-title">
+            <view class="weui-cell__hd">
+                <!-- <image src="{{networkDetailInfo.resUrl ? networkDetailInfo.resUrl : '../../assets/img/banner.jpg'}}" class="detail-banner"></image> -->
+                <image src="{{networkDetailInfo.resUrl ? 'https://webcrs.ukelink.com/attachment/awsWbs/showImage?key='+networkDetailInfo.resUrl : '../../assets/img/banner.jpg'}}" class="detail-banner"></image>
+            </view>
+            <view class="weui-cell__bd info-line-top">
+                <view class="detail-info-top">
+                    <view>{{networkDetailInfo.cabinetName}}</view>
+                    <view class="no-server" wx:if="{{networkDetailInfo.status !== 'NORMAL'}}">暂停服务</view>
+                </view>
+                <view class="detail-info-mid">
+                    <view class="mid-time-box">
+                        <image src="../../assets/img/icon-time.png" class="time-img pr20"></image>
+                        <span>{{networkDetailInfo.serviceTime}}</span>
+                    </view>
+                    <view class="mid-address-box">
+                        <image src="../../assets/img/icon-address.png" class="time-img pr20"></image>
+                        <span class="address-detail">{{networkDetailInfo.address}}</span>
+                    </view>
+                </view>
+                <view class="detail-info-bot">
+                    <view class="mid-time-box">
+                        <image src="../../assets/img/icon-rmb.png" class="time-img pr20"></image>
+                        <span>{{ networkDetailInfo.priceRule }}</span>
+                    </view>
+                </view>
+                <view class="detail-info-operate">
+
+                </view>
+            </view>
+            <!-- <view class="weui-cell info-line-bot">
+                <view class="weui-cell__hd detail-info-operate">
+                    <image class="operate-img pr20" src="../../assets/img/icon-borrow.png"></image>
+                    <span class="pr20">可借</span>
+                    <span class="device-num">{{networkDetailInfo.tmlNum}}</span>
+                </view>
+                <view class="weui-cell__bd detail-info-operate">
+                    <image class="operate-img pr20" src="../../assets/img/icon-return.png"></image>
+                    <span class="pr20">可还</span>
+                    <span class="device-num">{{networkDetailInfo.rtnTmlNum}}</span>
+                </view>
+            </view> -->
+        </view>
+        <!-- <orderstatus :status.sync="orderStatus"></orderstatus> -->
+        <navigator wx:if="{{orderStatus.unfinishOrderStatus===0}}" url="../borrow/borrow" class="page__hd network-foot network-foot_default">
+            借网宝
+        </navigator>
+        <view wx:elif="{{orderStatus.unfinishOrderStatus===1}}" class="page__hd network-foot network-foot_code">
+            <span class="pr20">取&还机码：</span>
+            <span>{{orderStatus.returnOrBorrowCode}}</span>
+        </view>
+    </view>
+</template>
+
+<script>
+    import wepy from 'wepy';
+    import login from '../../../utils/mixins/login.js';
+    import CONFIG_URL from '../../../utils/config-url.js';
+    import http from '../../../utils/request.js';
+    // import OrderStatus from './order-status';
+
+    export default class NetworkDetail extends wepy.page {
+        mixins = [login];
+        config = {
+            navigationBarTitleText: '网点详情'
+        }
+        components = {
+            // orderstatus: OrderStatus
+        }
+        data = {
+            userInfo: {
+                avatarUrl: '',
+                nickName: ''
+            },
+            cabinetCode: '',
+            networkDetailInfo: {},
+            orderStatus: {
+                unfinishOrderStatus: 0,
+                returnOrBorrowCode: ''
+            }
+        }
+        methods = {
+
+        }
+        queryUnFinishedOrder() {
+            http.post({
+                path: CONFIG_URL.order.queryUnFinishedOrder,
+                data: {}
+            }).then(d => {
+                const firstData = d.data[0];
+                /**
+                 * unfinishOrderStatus = 0, 借网宝
+                 * unfinishOrderStatus = 1, 取机码
+                 * unfinishOrderStatus = 2, 还机码
+                 */
+                if (firstData) {
+                    switch (firstData.status) {
+                    case 'WAIT_PICKUP':
+                    case 'WAIT_RETURN':
+                        this.orderStatus = {
+                            unfinishOrderStatus: 1,
+                            returnOrBorrowCode: firstData.deliveryCode
+                        };
+                        break;
+                    case 'WAIT_CHECK':
+                        this.orderStatus = {
+                            unfinishOrderStatus: 0,
+                            returnOrBorrowCode: ''
+                        };
+                        break;
+                    default:
+                        this.orderStatus = {
+                            unfinishOrderStatus: 0,
+                            returnOrBorrowCode: ''
+                        };
+                        break;
+                    }
+                } else {
+                    this.orderStatus = {
+                        unfinishOrderStatus: 0,
+                        returnOrBorrowCode: ''
+                    };
+                }
+                this.strOrderStatus = JSON.stringify(this.orderStatus);
+                this.$apply();
+            }, d => {
+                this.orderStatus.unfinishOrderStatus = 0;
+                this.orderStatus.returnOrBorrowCode = '';
+                this.strOrderStatus = JSON.stringify(this.orderStatus);
+                this.$apply();
+            });
+        }
+        async onLoad(opt) {
+            this.orderStatus = JSON.parse(opt.strOrderStatus);
+            const detailInfo = await Promise.all([
+                http.post({
+                    path: CONFIG_URL.network.queryDetail,
+                    data: { cabinetCode: opt.cabinetCode }
+                }),
+                http.post({
+                    path: CONFIG_URL.common.queryList,
+                    data: { type: 'PARAM', key: 'PRICE_RULE' } // 获取收费标准
+                })
+            ]);
+            this.networkDetailInfo = detailInfo[0].data;
+            this.networkDetailInfo.priceRule = detailInfo[1].data[0].value;
+            await this.queryUnFinishedOrder();
+            this.$apply();
+        }
+        async onShow() {
+            await this.queryUnFinishedOrder();
+            this.$apply();
+        }
+    }
+</script>

@@ -1,0 +1,79 @@
+<style lang="less" src="./assets/weui/weui.less"></style>
+
+<style lang="scss">
+    page {
+        background-color: #F5F5F5;
+        font-size: 14px;
+        box-sizing: border-box;
+    }
+
+    .container {
+        width: 100%;
+        height: 100%;
+    }
+</style>
+<template></template>
+<script>
+    import wepy from 'wepy';
+    import 'wepy-async-function';
+    import api from "./utils/config-url";
+    import http from "./utils/request";
+    import auth from "./utils/auth";
+    import storage from "./utils/storage";
+
+    export default class WBApp extends wepy.app {
+        constructor() {
+            super();
+            this.use('promisify');
+        };
+        config = {
+            pages: [
+                'view/page/home/network-list',
+                'view/page/home/network-detail',
+                'view/page/borrow/borrow',
+                'view/page/borrow/payment-deposit',
+                'view/page/borrow/recharge',
+                'view/page/borrow/borrow-success',
+                'view/page/borrow/borrow-failed',
+                'view/page/order/order',
+                'view/page/order/order-abnormaled',
+                'view/page/order/order-borrowed',
+                'view/page/order/order-canceled',
+                'view/page/order/order-finished',
+                'view/page/order/order-verified',
+                'view/page/order/order-haveorder',
+                'view/page/faq/faq',
+                'view/page/bindPhone/bindPhone',
+                /* 个人中心 */
+                'view/page/personalCenter/index',
+                /* 我的钱包 */
+                'view/page/myWallet/extract-success',
+                'view/page/myWallet/my-wallet',
+                'view/page/myWallet/deal-list'
+            ],
+            window: {
+                backgroundTextStyle: 'light',
+                navigationBarBackgroundColor: '#1e1e1e',
+                navigationBarTitleText: '网宝',
+                navigationBarTextStyle: 'white'
+            }
+        };
+        // 保存全局变量
+        globalData = {
+            cusTel: "", // 客服电话
+            receivableDeposit: 0, // 应交押金(分)
+            authStatus: 0
+        };
+        login() {
+            return auth.login(true).then(d => {
+                return auth.queryUserInfo(true);
+            });
+        };
+        auth() {
+            return auth.login().then(d => {
+                return auth.queryUserInfo(true);
+            });
+        }
+        onLaunch(params) {}
+    }
+</script>

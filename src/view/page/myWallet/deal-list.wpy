@@ -1,0 +1,181 @@
+<style lang="scss">
+    .icon_style{
+        width: 301rpx;
+        height: 170rpx;
+        margin: 446rpx auto 41rpx;
+        display: block;
+    }
+    .text_style{
+        font-family:PingFangSC-Regular;
+        font-size:28rpx;
+        color:#888888;
+        letter-spacing:-0.68rpx;
+    }
+    .list_bg{
+        background-color:#FFFFFF;
+    }
+    .list_box{
+        margin-left: 30rpx;
+        width: 720rpx;
+        height: 132rpx;
+        border-bottom:2px;
+        box-shadow:inset 0 -1px 0 0 rgba(224,224,224,0.50);
+    }
+    .left_box{
+        float:left;
+        text-align: left;
+    }
+    .name_style{
+        font-family:PingFangSC-Regular;
+        font-size: 30rpx;
+        color:#1e1e1e;
+        letter-spacing:0;
+        line-height: 30rpx;
+        margin-top: 30rpx;
+    }
+    .log_style{
+        font-family:PingFangSC-Regular;
+        font-size:28rpx;
+        color:#888888;
+        letter-spacing:-0.63rpx;
+        line-height:24rpx;
+        margin-top: 20rpx;
+    }
+    .right_box{
+        float: right;
+        text-align: left;
+        margin:50rpx 30rpx 0rpx 0rpx;
+
+        font-family:PingFangSC-Semibold;
+        font-size: 34rpx;
+        letter-spacing:0;
+    }
+    .colorPosi{
+        color:#24dba8;
+    }
+    .colorMinus{
+        color:#ff8300;
+    }
+    .marl{
+        margin-left: 25rpx;
+    }
+    /* 无交易记录 */
+    .no_detail{
+        text-align:center;
+    }
+    .icon_style{
+        width: 301rpx;
+        height: 170rpx;
+        margin: 446rpx auto 41rpx;
+        display: block;
+    }
+    .text_style{
+        font-family:PingFangSC-Regular;
+        font-size:28rpx;
+        color:#888888;
+        letter-spacing:-0.68rpx;
+    }
+</style>
+<template>
+    <view class="page">
+        <view  wx:if="{{listFlag}}"  class="list_bg">
+            <view wx:for="{{deallist}}" wx:key="unique">
+                <view class="list_box">
+                    <view class="left_box">
+                        <view class="name_style">{{dealText[item.changeType]}}</view>
+                        <view class="log_style"><text>{{paytype}}</text><text class="marl">{{item.createTime}}</text></view>
+                    </view>
+                    <view class="right_box colorPosi" wx:if="{{item.amount>0}}">
+                        +{{item.amount}}
+                    </view>
+                    <view class="right_box colorMinus" wx:elif="{{item.amount==0}}">
+                        -{{item.amount}}
+                    </view>
+                    <view class="right_box colorMinus" wx:else>
+                        {{item.amount}}
+                    </view>
+                </view>
+            </view>
+        </view>
+        <view class="no_detail" wx:else >
+            <image class='icon_style' src="{{imgUrl.icon}}"/>
+            <p class="text_style">抱歉，您还没有交易明细</p>
+        </view>
+    </view>
+</template>
+
+<script>
+    import wepy from "wepy";
+    import request from '../../../utils/request';
+    import apis from '../../../utils/config-url';
+    import tips from '../../../utils/tips';
+    import CONFIG_URL from '../../../utils/config-url.js';
+    import timeFormat from '../../../utils/timeFormat'
+
+    export default class DealList extends wepy.page {
+        /* 标题 */
+        config = {
+            navigationBarTitleText: '交易明细'
+        }
+
+        /* 数据 */
+        data = {
+            paytype:'微信',
+            listFlag:true,
+            imgUrl:{
+                icon:'../../assets/img/noDeal.png'
+            },
+            deallist:[],
+            dealText:{}
+        };
+
+        /* 方法 */
+
+        /* 查询交易类型 */
+        queryChangeType(){
+            let obj = {};
+            request.post({
+                path: CONFIG_URL.myWallet.QueryList,
+                data:{
+                    type:'BALANCE_CHANGE_TYPE'
+                }
+            }).then((res)=>{
+                let data = res.data;
+                for(let x in data){
+                    obj[data[x].key] = data[x].name;
+                }
+                this.dealText = obj;
+                this.$apply();
+            },(err)=>{
+                tips.err(err);
+            })
+        }
+
+        /* 查询明细 */
+        queryDetailList(){
+            request.post({
+                path:CONFIG_URL.myWallet.queryDetailList
+            }).then((res)=>{
+                let data = res.data.dataList;
+                if(data.length){
+                    for(let i=0; i<data.length;i++){
+                        data[i].createTime = timeFormat.formatDateTime('yyyy-MM-dd HH:mm:ss', data[i].createTime);
+                    }
+                    this.deallist = data;
+                    this.listFlag = true;
+                }else{
+                    this.listFlag = false;
+                }
+                this.$apply();
+            },(err)=>{
+                this.listFlag = false;
+                this.$apply();
+            })
+        }
+        /* 初始化 */
+        onLoad(){
+            this.queryChangeType(); //查询交易类型
+            this.queryDetailList(); //查询交易明细
+        }
+    }
+</script>

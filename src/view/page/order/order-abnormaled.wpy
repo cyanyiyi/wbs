@@ -1,0 +1,475 @@
+<template>
+    <view class="abnormaled_page">
+        <view class="abnormaled_img">
+            <image src="../../assets/img/banner.jpg" class="abnormaled_img_logo"></image>
+        </view>
+        <view class="abnormaled_content">
+            <view class="mark abnormaled_order_number">
+                <view class="abnormaled_order_number_key">{{title.orderNumber}}</view>
+                <view class="abnormaled_order_number_value">{{normaleDetail.orderSN}}</view>
+                <view class="abnormaled_order_number_status">{{normaleDetail.status}}</view>
+            </view>
+            <view class="abnormaled_imaginary_line"></view>
+            <view class="mark abnormaled_rent_time">
+                <view class="abnormaled_rent_time_key">{{title.rentTime}}</view>
+                <view class="abnormaled_rent_time_value">{{normaleDetail.deliveryTime}}</view>
+            </view>
+            <view class="mark abnormaled_rent_site">
+                <view class="abnormaled_rent_site_key">{{title.rentSite}}</view>
+                <view class="abnormaled_rent_site_value">{{normaleDetail.cabinetName}}</view>
+            </view>
+            <view class="abnormaled_imaginary_line"></view>
+
+            <view class="mark abnormaled_rent_time">
+                <view class="abnormaled_rent_time_key">{{title.returnTime}}</view>
+                <view class="abnormaled_rent_time_value">{{normaleDetail.returnTime}}</view>
+            </view>
+            <view class="mark abnormaled_rent_site">
+                <view class="abnormaled_rent_site_key">{{title.returnSite}}</view>
+                <view class="abnormaled_rent_site_value">{{normaleDetail.rtnCabinetName}}</view>
+            </view>
+            <view class="abnormaled_imaginary_line"></view>
+            <view class="mark abnormaled_get_return">
+                <view class="abnormaled_get_return_key">{{title.gRNumber}}</view>
+                <view class="abnormaled_get_return_value">{{normaleDetail.deliveryCode}}</view>
+            </view>
+            <view class="abnormaled_imaginary_line"></view>
+            <view class="mark abnormaled_utility_time">
+                <view class="abnormaled_utility_time_key">{{title.utilityTime}}</view>
+                <view class="abnormaled_utility_time_value">{{normaleDetail.serviceDuration}}</view>
+            </view>
+            <view class="mark abnormaled_rent_amount">
+                <view class="abnormaled_rent_amount_key">{{title.rentAmount}}</view>
+                <view class="abnormaled_rent_amount_value">{{normaleDetail.rentAmount}}</view>
+            </view>
+            <view class="mark abnormaled_deduct_deposit">
+                <view class="abnormaled_amount_key">{{title.deductDeposit}}</view>
+                <view class="abnormaled_rent_amount_value">{{normaleDetail.damageAmount}}</view>
+            </view>
+            <view class="mark abnormaled_over_deposit">
+                <view class="abnormaled_amount_key">{{title.overdueFine}}</view>
+                <view class="abnormaled_rent_amount_value">{{normaleDetail.overdueAmount}}</view>
+            </view>
+            <view class="abnormaled_imaginary_line"></view>
+            <view class="mark abnormaled_exception_specification">
+                <view class="abnormaled_exception_specification_key">{{title.exceptionSpecification}}</view>
+                <view class="abnormaled_exception_specification_value">{{normaleDetail.checkFailReason}}</view>
+                <repeat for="{{checkFailReasonList}}" key="index">
+                    <view class="abnormaled_exception_specification_valueSplit">{{item.checkFailReason}}</view>
+                </repeat>
+            </view>
+            <view class="abnormaled_imaginary_line"></view>
+            <view calss="mark">
+                <view class="abnormaled_customer_service_view" @tap="contact">
+                    <image src="../../assets/img/phone.png" class="phone-class"></image>
+                    {{title.exceptionSpecificationText}}
+                </view>
+            </view>
+        </view>
+    </view>
+</template>
+<script>
+    import wepy from 'wepy'
+    import request from '../../../utils/request'
+    import CONFIG_URL from '../../../utils/config-url'
+    import tips from '../../../utils/tips'
+    export default class extends wepy.page {
+        /* 标题 */
+        config = {
+            navigationBarTitleText: '订单详情'
+        };
+        data = {
+            title:{
+                orderNumber:"订单号码",
+                rentTime:"租借时间",
+                rentSite:"租借地点",
+                returnSite:"归还地点",
+                returnTime:"归还时间",
+                gRNumber:"取/还机码",
+                utilityTime:"使用时长",
+                rentAmount:"租金金额",
+                deductDeposit:"赔偿金",
+                overdueFine:'滞纳金',
+                exceptionSpecification:"异常说明",
+                exceptionSpecificationText:"如有疑问,请联系客服"
+            },
+            // 订单状态字典
+            status_dictionary:{
+                WAIT_PICKUP:'已下单',//待取货
+                WAIT_RETURN:'借用中',//待归还
+                WAIT_CHECK:'待核查',
+                FINISHED:'已完成',
+                CANCELED:'已取消',
+                ABNORMAL:'异常结束',
+            },
+            //分钟对应语言字典表
+            lan_dictionary:{
+                zh_cn:'分钟',
+                en_us:'minutes',
+                zh_hk:'分鍾'
+            },
+            normaleDetail:{},
+            checkFailReasonList:[],
+            tel:'88888888',
+        };
+        methods = {
+            contact(){
+                /*请求电话号码 拨打*/
+                wx.makePhoneCall({
+                    phoneNumber: this.tel // tel字符串类型，不能使数字
+                })
+            }
+        };
+        formatTime = function(timeStamp){
+            let date = new Date();
+            date.setTime(timeStamp);
+            let y = date.getFullYear();
+            let m = date.getMonth() + 1;
+            m = m < 10 ? ('0' + m) : m;
+            let d = date.getDate();
+            d = d < 10 ? ('0' + d) : d;
+            let h = date.getHours();
+            h = h < 10 ? ('0' + h) : h;
+            let minute = date.getMinutes();
+            let second = date.getSeconds();
+            minute = minute < 10 ? ('0' + minute) : minute;
+            second = second < 10 ? ('0' + second) : second;
+            return y + '-' + m + '-' + d+' '+h+':'+minute+':'+second;
+        };
+        getConcat = function(){
+            const params = {
+                type: 'PARAM',
+                key:'SERVICE_TELEPHONE'
+            };
+            request.post({
+                path: CONFIG_URL.common.queryList,
+                data: params,
+                requiresAuth: false
+            }).then((res)=>{
+                if(res.data.length){
+                    this.tel = res.data[0].value;
+                }
+                this.$apply();
+            },(err)=>{
+                wepy.showModal({
+                    content: err.resultDesc,
+                    showCancel: false
+                });
+            })
+        };
+        async onLoad(option){
+            let that = this,
+                lanType = 'zh_cn',
+                data = {orderSN:option.orderSN},
+                normaleDetail = {};
+            that.getConcat();
+            that.tel = that.$parent.globalData.cusTel;
+            that.normaleDetail = await request.post({
+                path: CONFIG_URL.order.queryOrderDetail,
+                data,
+                requiresAuth: false
+            }).then((res)=>{
+                normaleDetail = res.data;
+                normaleDetail.status = that.status_dictionary[normaleDetail.status] || '';
+                if(normaleDetail.rentAmount !== null && normaleDetail.rentAmount !== undefined && normaleDetail.rentAmount >=0){
+                    if(parseFloat((normaleDetail.rentAmount/100).toFixed(2)) > 0.00){
+                        normaleDetail.rentAmount = '￥'+(normaleDetail.rentAmount/100).toFixed(2);
+                    }else{
+                        normaleDetail.rentAmount = '￥' + 0;
+                    }
+                }else{
+                    normaleDetail.rentAmount = '';
+                }
+                if(normaleDetail.overdueAmount !== null && normaleDetail.overdueAmount !== undefined && normaleDetail.overdueAmount >=0){
+                    if(parseFloat((normaleDetail.overdueAmount/100).toFixed(2)) > 0.00){
+                        normaleDetail.overdueAmount = '￥'+(normaleDetail.overdueAmount/100).toFixed(2);
+                    }else{
+                        normaleDetail.overdueAmount = '￥'+ 0;
+                    }
+                }else{
+                    normaleDetail.overdueAmount = '';
+                }
+                if(normaleDetail.damageAmount !== null && normaleDetail.damageAmount !== undefined && normaleDetail.damageAmount >=0){
+                    if(parseFloat((normaleDetail.damageAmount/100).toFixed(2)) > 0.00){
+                        normaleDetail.damageAmount = '￥'+(normaleDetail.damageAmount/100).toFixed(2);
+                    }else{
+                        normaleDetail.damageAmount = '￥'+ 0;
+                    }
+                }else{
+                    normaleDetail.damageAmount = '';
+                }
+                normaleDetail.cabinetName = normaleDetail.cabinetName || '';
+                normaleDetail.rtnCabinetName = normaleDetail.rtnCabinetName || '';
+
+                //处理异常说明的内容
+                if(normaleDetail.checkFailReason.length > 0){
+                    normaleDetail.checkFailReason = normaleDetail.checkFailReason.join(',');
+                    let len = normaleDetail.checkFailReason.length,
+                        count = Math.ceil(len/20);
+                    if(count > 1){
+                        let resStr = normaleDetail.checkFailReason.substring(20,len);
+                        normaleDetail.checkFailReason = normaleDetail.checkFailReason.substring(0,20);
+                        for(let i = 0;i < count-1;i++){
+                            that.checkFailReasonList.push({checkFailReason:resStr.substring(len*i,len*i+len)})
+                        }
+                    }else{
+                        that.checkFailReasonList = [];
+                    }
+                }else{
+                    normaleDetail.checkFailReason = "";
+                }
+
+                normaleDetail.serviceDuration =  normaleDetail.serviceDuration?(parseInt(normaleDetail.serviceDuration/1000/60) + that.lan_dictionary[lanType]):'';
+                if(normaleDetail.deliveryTime){
+                    normaleDetail.deliveryTime = that.formatTime(normaleDetail.deliveryTime);
+                }else{
+                    normaleDetail.deliveryTime = '';
+                }
+                normaleDetail.returnTime = that.formatTime(normaleDetail.returnTime) || '';
+                that.normaleDetail = normaleDetail;
+                that.$apply();
+            },(error)=>{
+                return error;
+            })
+        };
+        onUnload(){
+            let that = this;
+            that.checkFailReasonList = [];
+            that.$apply();
+        }
+    }
+</script>
+<style lang="scss">
+    page {
+        background-color: #ffffff;
+    }
+    .mark wx-view{
+        display: inline-block;
+    }
+    .abnormaled_page{
+        width: 750rpx;
+    }
+    .abnormaled_content{
+        height: 930rpx;
+        background-color: #ffffff;
+    }
+    .abnormaled_img{
+        height: 500rpx;
+        width: 100%;
+    }
+    .abnormaled_img_logo{
+        height: 100%;
+        width: 100%;
+    }
+    .abnormaled_order_number{
+        margin-bottom: 40rpx;
+    }
+    .abnormaled_imaginary_line{
+        margin-left: 30rpx;
+        box-shadow:inset 0 -1rpx 0 0 rgba(224,224,224,0.50);
+        width:720rpx;
+        height:2rpx;
+    }
+    .abnormaled_order_number_key{
+        height: 28rpx;
+        margin-top: 40rpx;
+        margin-left: 44rpx;
+        font-family:PingFangSC-Regular;
+        font-size:28rpx;
+        color:#888888;
+        letter-spacing:0;
+        line-height:28rpx;
+    }
+    .abnormaled_order_number_value{
+        height: 28rpx;
+        margin-top: 40rpx;
+        margin-left: 20rpx;
+        font-family:PingFangSC-Semibold;
+        font-size:28rpx;
+        color:#1e1e1e;
+        letter-spacing:0;
+        line-height:28rpx;
+    }
+    .abnormaled_order_number_status{
+        height: 28rpx;
+        margin-top: 40rpx;
+        margin-right: 30rpx;
+        float: right;
+        font-family:PingFangSC-Regular;
+        font-size:28rpx;
+        color:#ff8300;
+        letter-spacing:0;
+        line-height:28rpx;
+    }
+    .abnormaled_rent_time{}
+    .abnormaled_rent_time_key{
+        height: 28rpx;
+        margin-top: 30rpx;
+        margin-left: 44rpx;
+        font-family:PingFangSC-Regular;
+        font-size:28rpx;
+        color:#888888;
+        letter-spacing:0;
+        line-height:28rpx;
+    }
+    .abnormaled_rent_time_value{
+        height: 28rpx;
+        margin-top: 30rpx;
+        margin-left: 20rpx;
+        font-family:PingFangSC-Semibold;
+        font-size:28rpx;
+        color:#1e1e1e;
+        letter-spacing:0;
+        line-height:28rpx;
+    }
+    .abnormaled_rent_site{
+        margin-bottom: 30rpx;
+    }
+    .abnormaled_rent_site_key{
+        height: 28rpx;
+        margin-top: 30rpx;
+        margin-left: 44rpx;
+        font-family:PingFangSC-Regular;
+        font-size:28rpx;
+        color:#888888;
+        letter-spacing:0;
+        line-height:28rpx;
+    }
+    .abnormaled_rent_site_value{
+        height: 28rpx;
+        margin-top: 30rpx;
+        margin-left: 20rpx;
+        font-family:PingFangSC-Semibold;
+        font-size:28rpx;
+        color:#1e1e1e;
+        letter-spacing:0;
+        line-height:28rpx;
+    }
+    .abnormaled_get_return{
+        margin-bottom: 40rpx;
+    }
+    .abnormaled_get_return_key{
+        height: 28rpx;
+        margin-top: 30rpx;
+        margin-left: 30rpx;
+        font-family:PingFangSC-Regular;
+        font-size:28rpx;
+        color:#888888;
+        letter-spacing:0;
+        line-height:28rpx;
+    }
+    .abnormaled_get_return_value{
+        height: 28rpx;
+        margin-top: 30rpx;
+        margin-left: 20rpx;
+        font-family:PingFangSC-Semibold;
+        font-size:28rpx;
+        color:#1e1e1e;
+        letter-spacing:0;
+        line-height:28rpx;
+    }
+    .abnormaled_utility_time{}
+    .abnormaled_utility_time_key{
+        height: 28rpx;
+        margin-top: 30rpx;
+        margin-left: 44rpx;
+        font-family:PingFangSC-Semibold;
+        font-size:28rpx;
+        color:#888888;
+        letter-spacing:0;
+        line-height:28rpx;
+    }
+    .abnormaled_utility_time_value{
+        height: 28rpx;
+        margin-top: 30rpx;
+        margin-left: 20rpx;
+        font-family:PingFangSC-Regular;
+        font-size:28rpx;
+        color:#1e1e1e;
+        letter-spacing:0;
+        line-height:28rpx;
+    }
+    .abnormaled_rent_amount{}
+    .abnormaled_rent_amount_key{
+        height: 28rpx;
+        margin-top: 30rpx;
+        margin-left: 44rpx;
+        font-family:PingFangSC-Regular;
+        font-size:28rpx;
+        color:#888888;
+        letter-spacing:0;
+        line-height:28rpx;
+    }
+    .abnormaled_amount_key{
+        height: 28rpx;
+        margin-top: 30rpx;
+        margin-left: 70rpx;
+        font-family:PingFangSC-Regular;
+        font-size:28rpx;
+        color:#888888;
+        letter-spacing:0;
+        line-height:28rpx;
+    }
+    .abnormaled_rent_amount_value{
+        height: 28rpx;
+        margin-top: 30rpx;
+        margin-left: 20rpx;
+        font-family:PingFangSC-Semibold;
+        font-size:28rpx;
+        color:#ff8300;
+        letter-spacing:0;
+        line-height:28rpx;
+    }
+    .abnormaled_deduct_deposit{}
+    .abnormaled_over_deposit{
+        margin-bottom: 30rpx;
+    }
+    .abnormaled_exception_specification{
+        margin-bottom: 30rpx;
+    }
+    .abnormaled_exception_specification_key{
+        height: 28rpx;
+        margin-top: 30rpx;
+        margin-left: 44rpx;
+        font-family:PingFangSC-Regular;
+        font-size:28rpx;
+        color:#888888;
+        letter-spacing:0;
+        line-height:28rpx;
+    }
+    .abnormaled_exception_specification_value{
+        height: 28rpx;
+        margin-top: 30rpx;
+        margin-left: 20rpx;
+        font-family:PingFangSC-Semibold;
+        font-size:28rpx;
+        color:#1e1e1e;
+        letter-spacing:0;
+        line-height:28rpx;
+    }
+    .abnormaled_exception_specification_valueSplit{
+        height: 28rpx;
+        margin-top: 10rpx;
+        margin-left: 176rpx;
+        font-family:PingFangSC-Semibold;
+        font-size:28rpx;
+        color:#1e1e1e;
+        letter-spacing:0;
+        line-height:48rpx;
+    }
+    .abnormaled_customer_service_view{
+        height: 28rpx;
+        margin-top: 60rpx;
+        margin-bottom: 40rpx;
+        margin-left: 238rpx;
+        font-family:PingFangSC-Regular;
+        font-size:26rpx;
+        color:#b4b4b4;
+        letter-spacing:0;
+        line-height:28rpx;
+    }
+    .phone-class{
+        width: 28rpx;
+        height: 28rpx;
+    }
+</style>

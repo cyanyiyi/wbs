@@ -1,0 +1,312 @@
+<template>
+    <view class="finished_page">
+        <view class="finished_img">
+            <image src="../../assets/img/banner.jpg" class="finished_img_logo"></image>
+        </view>
+        <view class="finished_content">
+            <view class="mark finished_order_number">
+                <view class="finished_order_number_key">{{title.orderNumber}}</view>
+                <view class="finished_order_number_value">{{finishedDetail.orderSN}}</view>
+                <view class="finished_order_number_status">{{finishedDetail.status}}</view>
+            </view>
+            <view class="finished_imaginary_line"></view>
+            <view class="mark finished_rent_time">
+                <view class="finished_rent_time_key">{{title.rentTime}}</view>
+                <view class="finished_rent_time_value">{{finishedDetail.deliveryTime}}</view>
+            </view>
+            <view class="mark finished_rent_site">
+                <view class="finished_rent_site_key">{{title.rentSite}}</view>
+                <view class="finished_rent_site_value">{{finishedDetail.cabinetName}}</view>
+            </view>
+            <view class="finished_imaginary_line"></view>
+
+            <view class="mark finished_rent_time">
+                <view class="finished_rent_time_key">{{title.returnTime}}</view>
+                <view class="finished_rent_time_value">{{finishedDetail.returnTime}}</view>
+            </view>
+            <view class="mark finished_rent_site">
+                <view class="finished_rent_site_key">{{title.returnSite}}</view>
+                <view class="finished_rent_site_value">{{finishedDetail.rtnCabinetName}}</view>
+            </view>
+            <view class="finished_imaginary_line"></view>
+            <view class="mark finished_get_return">
+                <view class="finished_get_return_key">{{title.gRNumber}}</view>
+                <view class="finished_get_return_value">{{finishedDetail.deliveryCode}}</view>
+            </view>
+            <view class="finished_imaginary_line"></view>
+            <view class="mark finished_utility_time">
+                <view class="finished_utility_time_key">{{title.utilityTime}}</view>
+                <view class="finished_utility_time_value">{{finishedDetail.serviceDuration}}</view>
+            </view>
+            <view class="mark finished_rent_amount">
+                <view class="finished_rent_amount_key">{{title.rentAmount}}</view>
+                <view class="finished_rent_amount_value">{{finishedDetail.rentAmount}}</view>
+            </view>
+            <view class="finished_imaginary_line finished_imaginary_top"></view>
+        </view>
+    </view>
+</template>
+<script>
+    import wepy from 'wepy'
+    import request from '../../../utils/request'
+    import CONFIG_URL from '../../../utils/config-url'
+    export default class Article extends wepy.page {
+        /* 标题 */
+        config = {
+            navigationBarTitleText: '订单详情'
+        };
+        data = {
+            title:{
+                orderNumber:"订单号码",
+                rentTime:"租借时间",
+                rentSite:"租借地点",
+                returnSite:"归还地点",
+                returnTime:"归还时间",
+                gRNumber:"取/还机码",
+                utilityTime:"使用时长",
+                rentAmount:"租金金额",
+            },
+            // 订单状态字典
+            status_dictionary:{
+                WAIT_PICKUP:'已下单',//待取货
+                WAIT_RETURN:'借用中',//待归还
+                WAIT_CHECK:'待核查',
+                FINISHED:'已完成',
+                CANCELED:'已取消',
+                ABNORMAL:'异常结束',
+            },
+            //分钟对应语言字典表
+            lan_dictionary:{
+                zh_cn:'分钟',
+                en_us:'minutes',
+                zh_hk:'分鍾'
+            },
+            finishedDetail:{}
+        };
+        methods = {};
+        formatTime = function(timeStamp){
+            let date = new Date();
+            date.setTime(timeStamp);
+            let y = date.getFullYear();
+            let m = date.getMonth() + 1;
+            m = m < 10 ? ('0' + m) : m;
+            let d = date.getDate();
+            d = d < 10 ? ('0' + d) : d;
+            let h = date.getHours();
+            h = h < 10 ? ('0' + h) : h;
+            let minute = date.getMinutes();
+            let second = date.getSeconds();
+            minute = minute < 10 ? ('0' + minute) : minute;
+            second = second < 10 ? ('0' + second) : second;
+            return y + '-' + m + '-' + d+' '+h+':'+minute+':'+second;
+        };
+        async onLoad(option){
+            let that = this,
+                lanType = 'zh_cn',
+                data = {orderSN:option.orderSN},
+                finishedDetail = {};
+            that.finishedDetail = await request.post({
+                path: CONFIG_URL.order.queryOrderDetail,
+                data,
+                requiresAuth: false
+            }).then((res)=>{
+                finishedDetail = res.data;
+                finishedDetail.status = that.status_dictionary[finishedDetail.status] || '';
+                if(finishedDetail.rentAmount !==null && finishedDetail.rentAmount!== undefined && finishedDetail.rentAmount>=0){
+                    if(parseFloat((finishedDetail.rentAmount/100).toFixed(2)) > 0.00){
+                        finishedDetail.rentAmount = '￥'+(finishedDetail.rentAmount/100).toFixed(2);
+                    }else{
+                        finishedDetail.rentAmount = '￥' + 0;
+                    }
+                }else{
+                    finishedDetail.rentAmount = '';
+                }
+                finishedDetail.cabinetName = finishedDetail.cabinetName || '';
+                finishedDetail.rtnCabinetName = finishedDetail.rtnCabinetName || '';
+                finishedDetail.serviceDuration =  finishedDetail.serviceDuration?(parseInt(finishedDetail.serviceDuration/1000/60) + that.lan_dictionary[lanType]):'';
+                if(finishedDetail.deliveryTime){
+                    finishedDetail.deliveryTime = that.formatTime(finishedDetail.deliveryTime);
+                }else{
+                    finishedDetail.deliveryTime = '';
+                }
+                finishedDetail.returnTime = that.formatTime(finishedDetail.returnTime) || '';
+                that.finishedDetail = finishedDetail;
+                that.$apply();
+            },(error)=>{
+                return error;
+            })
+        }
+    }
+</script>
+<style lang="scss">
+    .mark wx-view{
+        display: inline-block;
+    }
+    .finished_page{
+        width: 750rpx;
+    }
+    .finished_content{
+        height: 704rpx;
+        background-color: #ffffff;
+    }
+    .finished_img{
+        height: 500rpx;
+        width: 100%;
+    }
+    .finished_img_logo{
+        height: 100%;
+        width: 100%;
+    }
+    .finished_order_number{
+        margin-bottom: 40rpx;
+    }
+    .finished_imaginary_line{
+        margin-left: 30rpx;
+        box-shadow:inset 0 -1rpx 0 0 rgba(224,224,224,0.50);
+        width:720rpx;
+        height:2rpx;
+    }
+    .finished_order_number_key{
+        height: 28rpx;
+        margin-top: 40rpx;
+        margin-left: 44rpx;
+        font-family:PingFangSC-Regular;
+        font-size:28rpx;
+        color:#888888;
+        letter-spacing:0;
+        line-height:28rpx;
+    }
+    .finished_order_number_value{
+        height: 28rpx;
+        margin-top: 40rpx;
+        margin-left: 20rpx;
+        font-family:PingFangSC-Semibold;
+        font-size:28rpx;
+        color:#1e1e1e;
+        letter-spacing:0;
+        line-height:28rpx;
+    }
+    .finished_order_number_status{
+        height: 28rpx;
+        margin-top: 40rpx;
+        margin-right: 30rpx;
+        float: right;
+        font-family:PingFangSC-Regular;
+        font-size:28rpx;
+        color: #cccccc;
+        letter-spacing:0;
+        line-height:28rpx;
+    }
+    .finished_rent_time{}
+    .finished_rent_time_key{
+        height: 28rpx;
+        margin-top: 30rpx;
+        margin-left: 44rpx;
+        font-family:PingFangSC-Regular;
+        font-size:28rpx;
+        color:#888888;
+        letter-spacing:0;
+        line-height:28rpx;
+    }
+    .finished_rent_time_value{
+        height: 28rpx;
+        margin-top: 30rpx;
+        margin-left: 20rpx;
+        font-family:PingFangSC-Semibold;
+        font-size:28rpx;
+        color:#1e1e1e;
+        letter-spacing:0;
+        line-height:28rpx;
+    }
+    .finished_rent_site{
+        margin-bottom: 30rpx;
+    }
+    .finished_rent_site_key{
+        height: 28rpx;
+        margin-top: 30rpx;
+        margin-left: 44rpx;
+        font-family:PingFangSC-Regular;
+        font-size:28rpx;
+        color:#888888;
+        letter-spacing:0;
+        line-height:28rpx;
+    }
+    .finished_rent_site_value{
+        height: 28rpx;
+        margin-top: 30rpx;
+        margin-left: 20rpx;
+        font-family:PingFangSC-Semibold;
+        font-size:28rpx;
+        color:#1e1e1e;
+        letter-spacing:0;
+        line-height:28rpx;
+    }
+    .finished_get_return{
+        margin-bottom: 40rpx;
+    }
+    .finished_get_return_key{
+        height: 28rpx;
+        margin-top: 30rpx;
+        margin-left: 30rpx;
+        font-family:PingFangSC-Regular;
+        font-size:28rpx;
+        color:#888888;
+        letter-spacing:0;
+        line-height:28rpx;
+    }
+    .finished_get_return_value{
+        height: 28rpx;
+        margin-top: 30rpx;
+        margin-left: 20rpx;
+        font-family:PingFangSC-Semibold;
+        font-size:28rpx;
+        color:#1e1e1e;
+        letter-spacing:0;
+        line-height:28rpx;
+    }
+    .finished_utility_time{}
+    .finished_utility_time_key{
+        height: 28rpx;
+        margin-top: 30rpx;
+        margin-left: 44rpx;
+        font-family:PingFangSC-Regular;
+        font-size:28rpx;
+        color:#888888;
+        letter-spacing:0;
+        line-height:28rpx;
+    }
+    .finished_utility_time_value{
+        height: 28rpx;
+        margin-top: 30rpx;
+        margin-left: 20rpx;
+        font-family:PingFangSC-Semibold;
+        font-size:28rpx;
+        color:#1e1e1e;
+        letter-spacing:0;
+        line-height:28rpx;
+    }
+    .finished_rent_amount{}
+    .finished_rent_amount_key{
+        height: 28rpx;
+        margin-top: 30rpx;
+        margin-left: 44rpx;
+        font-family:PingFangSC-Regular;
+        font-size:28rpx;
+        color:#888888;
+        letter-spacing:0;
+        line-height:28rpx;
+    }
+    .finished_rent_amount_value{
+        height: 28rpx;
+        margin-top: 30rpx;
+        margin-left: 20rpx;
+        font-family:PingFangSC-Semibold;
+        font-size:28rpx;
+        color:#ff8300;
+        letter-spacing:0;
+        line-height:28rpx;
+    }
+    .finished_imaginary_top{
+        margin-top: 30rpx;
+    }
+</style>

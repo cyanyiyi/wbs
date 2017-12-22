@@ -1,0 +1,134 @@
+<!--
+    确认借网宝
+    cheng.feng 2017/11/20
+ -->
+ <style lang="css" src="./style.css"></style>
+
+ <template>
+     <view class="bg-white mb100">
+         <image class='borrow-banner' src="../../assets/img/pic01.jpg" />
+         <view class="tips-list" wx:if="tipShow">
+             <view class="p-list p-bottom">网宝是集“中港澳高速wifi+充电宝”于一体的智能设备。</view>
+             <view class="p-list">收费标准：{{ tips || "..." }}。</view>
+         </view>
+     </view>
+     <view class="footer-button">
+         <button type="primary" class="btn-confirm" @tap="btn" loading="{{loading}}">确认借网宝</button>
+     </view>
+ </template>
+
+ <script>
+ import wepy from 'wepy';
+ import http from '../../../utils/request';
+ import api from '../../../utils/config-url';
+
+ export default class extends wepy.page {
+     config = {
+         navigationBarTitleText: '确认借网宝'
+     };
+     data = {
+         loading: false,
+         tips: "",
+         tipShow: false,
+         state: 0,  // 1,借用时若未支付押金，跳转支付押金页面 payment-deposit
+         // 2,若已支付押金，且账号余额大于0，扫码可借设备。
+         // 3,若已支付押金，账号余额小于等于0，则跳转充值账户余额 recharge
+         // 4,若该用户已有2个设备待核查, 跳转到借用失败页面 borrow-failed
+     };
+     methods = {
+         btn: function () {
+             var that = this;
+             if(that.loading) return;
+             /* wx.navigateTo({ url : "recharge?balance=" + 100 });
+             return; */
+
+             that.loading = true;
+             that.queryUserInfo().then(function () {
+                 that.loading = false;
+                 switch (that.state) {
+                     case 1: wx.navigateTo({ url: "payment-deposit?delta=1" }); break;
+                     case 2: that.createOrder(); break;
+                     case 3: wx.navigateTo({ url: "recharge?balance=" + that.balance + "&delta=1" }); break;
+                     case 4: wx.navigateTo({ url: "borrow-failed" }); break;
+                 }
+                 that.$apply();
+             }, function(){
+                 that.loading = false;
+                 that.$apply();
+             });
+         }
+     };
+     queryUserInfo = function () {
+         var that = this;
+         return http.post({
+             path: api.borrow.queryUnFinishedOrder, // 检查用户借用情况
+         }).then(d => {
+             // 用户在借设备小于2
+             if (!d.data || d.data.length < 2) {
+                 return http.post({
+                     path: api.borrow.queryUserInfo,
+                 });
+             }
+             else {
+                 that.state = 4;
+             }
+         }).then(res => {
+             if (res) {
+                 let deposite = res.data.deposite;
+                 let balance = res.data.balance;
+                 if (deposite == 0) that.state = 1;
+                 else if (deposite > 0 && balance > 0) that.state = 2;
+                 else if (deposite > 0 && balance <= 0) that.state = 3;
+                 else that.state = 4;
+                 that.balance = balance;
+             }
+             that.loading = false;
+             that.$apply();
+         }, res => {
+             that.loading = false;
+             that.$apply();
+         });
+     };
+     createOrder = function(){
+         http.post({
+             path: api.borrow.createOrder
+         }).then(d => {
+             wx.navigateTo({ url: "borrow-success?deliveryCode=" + d.data.deliveryCode });
+         }, d=>{
+             if(d.resultCode === "01232002"){
+                 wx.showModal({
+                     title: '借用失败',
+                     content: '因硬件设备升级，押金上调，须退押金后重新充值方可借用。',
+                     confirmText : "去退押金",
+                     success: function(res) {
+                         if (res.confirm) {
+                             wx.navigateTo({ url: "../myWallet/my-wallet" });
+                         }
+                     }
+                 })
+             }
+         });
+         /* 扫码功能待确认
+         wx.scanCode({
+             success: function (res) {
+                 // res.result;
+             },
+             fail: function (res) { }
+         }); */
+     };
+     async onLoad() {
+         await this.$parent.auth();
+         http.post({
+             path: api.common.queryList,
+             data: { type: "PARAM", key: "PRICE_RULE" }
+         }).then(d => {
+             this.tips = d.data[0].value.replace(/,/g, "，");
+             this.tipShow = true;
+             this.$apply();
+         });
+     };
+     onHide = function () {
+         // this.loading = false;
+     }
+ };
+ </script>

@@ -1,0 +1,52 @@
+/* 背景图 */
+.per_center_banner{
+    width: 750rpx;
+    height: 400rpx;
+    display: block;
+}
+.bgimage{
+    display: block;
+    position: absolute;
+    top: 0;
+    width: 759rpx;
+    height: 400rpx;
+    text-align: center;
+}
+/* 用户头像 */
+.userIcon{
+    width: 160rpx;
+    height: 160rpx;
+    margin: 70rpx auto 0rpx;
+    border-radius: 50%;
+    clear: both;
+}
+
+.weui-cell {
+    padding: 38rpx 30rpx;
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.phoneStyle{
+    font-family:PingFangSC-Regular;
+    font-size:32rpx;
+    color:#FFFFFF;
+    letter-spacing:0;
+    text-align:center;
+}
+.weui-cell__bd{
+    font-family:PingFangSC-Regular;
+    font-size:32rpx;
+    color:#1e1e1e;
+    letter-spacing:0;
+    margin-left: 10rpx;
+}
+.weui-cells_after-title{
+    background-color:#FFFFFF;
+}
+.weui-cell:before {
+    left: 30rpx;
+    border-top:0rpx;
+    box-shadow:inset 0 -1rpx 0 0 rgba(224,224,224,0.50);
+}

@@ -1,0 +1,109 @@
+
+
+<style lang="scss">
+    .page{
+        background-color: #FFFFFF;
+    }
+    .img_box{
+        width: 750rpx;
+        height: 350rpx;
+        text-align: center;
+    }
+    .bannerBg{
+        width: 330rpx;
+        height: 188rpx;
+        margin: 81rpx auto 0rpx;
+    }
+
+
+    .text_list{
+        padding-left: 30rpx;
+    }
+    .line_style{
+        padding: 30rpx 0rpx;
+        border-bottom:1rpx solid #D9D9D9;
+    }
+    .font-left{
+        font-family:PingFangSC-Regular;
+        font-size:32rpx;
+        color:#888888;
+        letter-spacing:0;
+    }
+    .font-right{
+        font-family:PingFangSC-Regular;
+        font-size:32rpx;
+        color:#1e1e1e;
+        letter-spacing:0;
+        margin-left:30rpx;
+    }
+    .button_box{
+        width: 750rpx;
+        text-align: center;
+        position:absolute;
+        bottom: 0rpx;
+        padding: 0rpx 30rpx;
+        box-sizing:border-box;
+    }
+    .tips_style{
+        font-family:PingFangSC-Regular;
+        font-size:28rpx;
+        color:#b4b4b4;
+        letter-spacing:0;
+        margin-bottom: 30rpx;
+    }
+
+</style>
+<template>
+    <view class="page">
+        <view class='img_box'>
+            <image src="{{imgUrl.bannerBg}}" class="bannerBg"/>
+        </view>
+
+        <view class="text_list">
+            <view class="line_style"><span class="font-left">退还金额</span> <span class="font-right">{{deposite}}</span></view>
+            <view class="line_style"><span class="font-left">到账方式</span> <span class="font-right">按充值支付方式原路退回</span></view>
+            <view class="line_style"><span class="font-left">申请时间</span> <span class="font-right">{{extractTime}}</span></view>
+            <view class="line_style"><span class="font-left">到账时间</span> <span class="font-right">0-5个工作日</span></view>
+        </view>
+
+        <view class="button_box">
+            <p class="tips_style">退还申请已经提交，请耐心等待！</p>
+            <button class="weui-btn button_font" type="primary" @tap="ok">知道了</button>
+        </view>
+    </view>
+</template>
+
+<script>
+    import wepy from 'wepy'
+    import timeFormat from '../../../utils/timeFormat'
+
+    export default class extends wepy.page{
+
+        /* 标题 */
+        config = {
+            navigationBarTitleText: '退还押金'
+        };
+
+        data = {
+            imgUrl:{
+                bannerBg:'../../assets/img/borrow-success.png'
+            },
+            deposite:0,
+            extractTime:''
+        };
+
+        methods = {
+            ok(){
+                wx.navigateBack({ delta: 1 });
+            }
+        }
+
+        onLoad(params){
+            let nowTime = new Date();
+            this.extractTime = timeFormat.formatDateTime('yyyy-MM-dd HH:mm:ss',nowTime.getTime());
+            this.deposite = params.deposite;
+            this.$apply();
+        }
+    }
+
+</script>

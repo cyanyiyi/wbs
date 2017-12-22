@@ -1,0 +1,53 @@
+.mt90{margin-top:90rpx;}
+.mb100{margin-bottom:100rpx;}
+.mb80{margin-bottom:80rpx;}
+.mb18{margin-bottom:18rpx;}
+
+.bg-white{background-color:#fff; overflow:hidden; }
+.p-bottom{border-bottom:2rpx solid #efefef;}
+.c-confirm{color:#24dba8; }
+
+.borrow-banner{width:100%; height:400rpx; display:block; margin-left:auto; margin-right:auto; }
+.w-350{width:350rpx; height:200rpx;}
+
+.tips-list{background-color:#fff; padding-left:30rpx; padding-right:30rpx;}
+.tips-list .p-list{position:relative; padding:30rpx 0rpx 30rpx 38rpx; color:#333;}
+.tips-list .p-list::before{content:""; position:absolute; left:0; top:42rpx; width:16rpx; height:16rpx; background-color:#24dba8; border-radius:50%;}
+
+
+.deposit{padding-top:90rpx; padding-bottom:20rpx;}
+.deposit .p-money{height:100rpx; line-height:100rpx; text-align:center; font-size:80rpx; color:#ff8300; font-weight:bold;}
+.deposit .p-tips{ font-size:32rpx; color:#000; text-align:center; line-height:1.5em;}
+.deposit .p-text{font-size:28rpx; text-align:center; line-height:1.5em; color:#888; }
+
+.recharge{padding:40rpx 30rpx 20rpx;}
+
+.balance .p-title{height:38rpx; line-height:38rpx;}
+.balance .p-title text{ color:#1e1e1e; font-size:28rpx; margin-right:30rpx; }
+.balance .p-tips{ position:relative; display:none; font-size:24rpx; color:#fff; height:38rpx; padding:0 12rpx; background-color:#ff8300; border-radius:3px; z-index:3; }
+.balance .p-tips:before{position:absolute; left:-12rpx; bottom:0; content:""; width:24rpx; height:24rpx; border-bottom:12rpx solid #ff8300; border-left:12rpx solid transparent; border-right:12rpx solid transparent;}
+.balance .p-money{font-size:60rpx; line-height:130rpx; color:#24dba8; font-weight:bold;}
+.balance.minus .p-tips{display:inline-block;}
+.balance.minus .p-money{color:#ff8300; }
+
+.recharge-money{padding-top:18rpx;}
+.recharge-money .p-title{ font-size:28rpx; color:#1e1e1e; line-height:96rpx; }
+.recharge-money .p-flex{display:flex; flex-wrap:wrap; margin-right:-20rpx; /* justify-content:space-between; */ }
+.recharge-money .p-option{display:flex; justify-content:center; flex-direction:column; width:212rpx; height:116rpx; border:2rpx solid #c8c8c8; border-radius:4px; font-size:32rpx; margin-bottom:20rpx; margin-right:20rpx; text-align:center;}
+.recharge-money .p-option text{display:block; color:#888; font-size:24rpx;}
+.recharge-money .curr{background-color:#24dba8; color:#fff; border-color:#24dba8; }
+.recharge-money .curr text{color:inherit; }
+
+.payment-select{position:relative; height:100rpx; line-height:100rpx; padding-left:105rpx; font-size:34rpx; }
+.payment-select .p-wechat{position:absolute;left:30rpx; top:25rpx; width:50rpx; height:50rpx;}
+.payment-select .p-selected{position:absolute; right:30rpx; top:25rpx; width:50rpx; height:50rpx;}
+
+
+.footer-button{padding-left:30rpx; padding-right:30rpx;}
+
+.footer-fixed{position:fixed; left:0; bottom:0; width:100%; text-align:center; z-index:5;}
+.footer-fixed .p-tel{color:#888; font-size:26rpx; margin-bottom: 30rpx; }
+.footer-fixed .p-phone{display:inline-block; width:25rpx; height:25rpx;}
+
+button.btn-confirm{background-color:#24dba8; border-radius:2px; }
+button.btn-confirm::after{border:0;}

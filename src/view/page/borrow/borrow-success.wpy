@@ -1,0 +1,57 @@
+<!--
+    借用成功/失败
+    cheng.feng 2017/11/21
+ -->
+ <style lang="css" src="./style.css"></style>
+
+ <template>
+     <view class="bg-white mb100">
+         <image class='borrow-banner mt90 mb80 w-350' src="../../assets/img/borrow-success.png"/>
+         <view class="tips-list">
+             <view class="p-list p-bottom">借用成功，请在机柜使用取&还机码 <text class="c-confirm">{{ deliveryCode  }}</text> 取出网宝即可使用。取机码7天内有效。</view>
+             <view class="p-list">同样使用取&还机码在任意网点进行还机即可。</view>
+         </view>
+     </view>
+     <view class="footer-fixed">
+         <view class="p-tel" @tap="tel">
+             <image class="p-phone" src="../../assets/img/phone.png"></image>
+             若有疑问，请联系客服
+         </view>
+         <button type="primary" class="btn-confirm" @tap="btn" loading="{{loading}}">完成</button>
+     </view>
+ </template>
+
+ <script>
+ import wepy from 'wepy';
+ import api from '../../../utils/config-url';
+ export default class extends wepy.page {
+     config = {
+         navigationBarTitleText: '借用成功'
+     };
+     data = {
+         deliveryCode : "",
+     };
+     methods = {
+         tel : function(){
+             http.post({
+                 path: api.common.queryList,
+                 data: { type: "PARAM", key: "SERVICE_TELEPHONE" } // 获取客服电话
+             }).then( d=>{
+                 wx.makePhoneCall({
+                     phoneNumber: d.data[0].value,
+                     success() {
+                         console.log("成功拨打电话");
+                     }
+                 });
+             });
+         },
+         btn : function(){
+             // wx.navigateBack({ delta: 2 });
+             wx.reLaunch({ url: '../home/network-list' });
+         }
+     };
+     onLoad = function(params){
+         this.deliveryCode = params.deliveryCode;
+     }
+ };
+ </script>

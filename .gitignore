@@ -1,0 +1,11 @@
+dist
+node_modules
+bower_components
+.idea
+*.swp
+.DS_Store
+.DS_Store?
+.svn
+.wepycache
+
+npm-debug.log

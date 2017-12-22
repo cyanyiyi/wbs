@@ -1,0 +1,366 @@
+
+<!-- 样式文件，可内嵌，也可单独分出 -->
+<style lang="scss">
+    page{
+        background-color: #F5F5F5;
+    }
+    .mgl40{
+        margin-left:40rpx;
+    }
+    /* 背景图 */
+    .per_center_banner{
+        width: 750rpx;
+        height: 400rpx;
+        display: block;
+    }
+    .bgimage{
+        width: 750rpx;
+        height:440rpx;
+        text-align: center;
+        padding-top: 120rpx;
+        background-image:-webkit-linear-gradient(90deg, #02d7a7, #02d2de);
+        background-image:linear-gradient(90deg, #02d7a7, #02d2de);
+        box-sizing:border-box;
+    }
+    .balance_style{
+        font-family:PingFangSC-Semibold;
+        font-size:80rpx;
+        color:#ffffff;
+        letter-spacing:-2.89rpx;
+    }
+    .tips_style{
+        font-family:PingFangSC-Semibold;
+        font-size: 32rpx;
+        color:#ffffff;
+    }
+
+    /* 交易明细 */
+    .transaction_detail{
+        position:absolute;
+        right: 24rpx;
+        top: 16rpx;
+        font-size: 32rpx;
+        font-family: PingFangSC-Regular;
+        color: #ffffff;
+        letter-spacing: -1.01rpx;
+    }
+    .extract_style:after{
+        content: '|';
+        margin: 0rpx 20rpx;
+    }
+
+    .MyWallet_box{
+        background-color: #FFFFFF;
+        padding: 30rpx;
+    }
+    .pay_btn_box{
+        margin-top: 100rpx;
+    }
+
+
+    /* 样式覆盖 */
+    button[type="primary"]{
+        color: #FFFFFF;
+        background-color: #24DBA8;
+    }
+    .page__bd_spacing {
+        padding-left:30rpx;
+        padding-right:30rpx;
+    }
+
+    .right{
+        float: right;
+    }
+
+    .font_style{
+        font-family: PingFangSC-Regular;
+        font-size: 32rpx;
+        color: #1e1e1e;
+        letter-spacing: 0;
+        line-height: 28rpx;
+    }
+    .font_style_green{
+        font-family:PingFangSC-Regular;
+        font-size: 32rpx;
+        color:#24dba8;
+        letter-spacing:0;
+        line-height:28rpx;
+    }
+
+    .font_style_gray{
+        font-family:PingFangSC-Regular;
+        font-size: 32rpx;
+        color:#c8c8c8;
+        letter-spacing:0;
+        line-height:28rpx;
+    }
+    .button_primary{
+        /* 覆盖button样式，待优化 */
+        background-color:transparent;
+        position:relative;
+        display:inline-block;
+        margin-left:auto;
+        margin-right:auto;
+        padding:3rpx 0rpx;
+        box-sizing:border-box;
+        text-decoration:none;
+        border:0rpx;
+        -webkit-tap-highlight-color:transparent;
+        overflow:hidden;
+    }
+    .button_primary:after{
+        border: 0rpx;
+    }
+    .button_font{
+        font-size: 38rpx;
+    }
+    .waves{margin-top:-90rpx;}
+
+    .wb-modal-mask {
+        z-index: inherit;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+        transition: background-color .3s;
+        background-color: inherit;
+        z-index: 1000;
+        position: absolute;
+        background-color: rgba(0, 0, 0, 0.6);
+        animation: fadeIn ease .3s forwards;
+    }
+</style>
+
+<template>
+    <view class="page">
+        <view class="bgimage">
+            <view class="balance_style"><text>￥</text><text>{{balance}}</text></view>
+            <view class='tips_style'>- {{text.availableBalance}} -</view>
+        </view>
+        <waves class="waves" width="750" height="90"></waves>
+        <!-- <image class='per_center_banner' src="{{imgUrl.bannerBg}}"/> -->
+
+        <view class="transaction_detail">
+            <view>
+                <!--<span @tap="extract" class="extract_style"  wx:if="{{deposite > 0 || balance>0}}" >提现</span>-->
+                <span @tap="navTo('./deal-list')">交易明细</span>
+            </view>
+        </view>
+
+        <view class="page__bd MyWallet_box">
+            <view class="right">
+                <text wx:if="{{deposite > 0}}" class="font_style_green" @tap="returnCashMoney">退还押金</text>
+                <text wx:else disabled="true" class="font_style_gray">退还押金</text>
+            </view>
+            <view>
+                <text class="font_style">我的押金</text>
+                <text wx:if="{{deposite > 0}}" class="font_style_green mgl40">￥{{deposite}}</text>
+                <text wx:if="{{deposite <= 0}}" class="font_style_gray mgl40">￥{{deposite}}</text>
+            </view>
+        </view>
+
+        <view class="page__bd page__bd_spacing pay_btn_box">
+            <button class="weui-btn button_font" type="primary" @tap="payTips">充值</button>
+        </view>
+
+        <view class="wb-modal-mask" wx:if='{{modalFlag}}'></view> <!-- 弹窗遮罩 -->
+
+    </view>
+</template>
+
+<script>
+    import wepy from 'wepy';  // wepy
+    import request from '../../../utils/request';
+    import api from '../../../utils/config-url';
+    import tips from '../../../utils/tips';
+    import waves from '../../../components/waves/waves';
+
+    export default class extends wepy.page {
+        components = {
+            waves
+        };
+        /* 标题 */
+        config = {
+            navigationBarTitleText: '我的钱包'
+        };
+
+        /* 页面数据 */
+        data = {
+            title:'我的钱包',
+            deposite:"-",
+            balance:"-",
+            modalFlag:false,
+            tel:"",
+            user:{
+                account:"150****704"
+            },
+            text:{
+                walletText:'我的钱包',
+                orderText:'我的订单',
+                questionText:'常见问题',
+                changeMobileText:'更换绑定手机',
+                availableBalance:'可用余额'
+            },
+            imgUrl:{
+                /* 导航图 */
+                bannerBg:'../../assets/img/mywalletBanner.png',
+                //  bannerBg:'../../assets/img/mywalletBanner.png',
+                /* 用户头像 */
+                userIcon:'../../assets/img/user.png',
+                /* 图标 */
+                walletIcon:'../../assets/img/walletIcon.png',
+                orderIcon:'../../assets/img/orderIcon.png',
+                questionIcon:'../../assets/img/questionIcon.png',
+                changeMobile:'../../assets/img/iphoneIcon.png'
+            }
+        };
+
+        methods = {
+            /* 充值押金 */
+            async payTips () {
+                let that = this;
+                if(that.deposite<=0){
+                    let res = await wepy.showModal({
+                        title: '充值提示',
+                        content: '充值余额前需要先交押金',
+                        confirmText: '充值押金',
+                        cancelText: '取消'
+                    });
+
+                    if (res.confirm) {
+                        console.log('充值押金');
+                        wx.navigateTo({ url : "../borrow/payment-deposit" });
+                    } else {
+                        console.log('取消');
+                    }
+                }else{
+                    wx.navigateTo({ url : "../borrow/recharge?balance="+this.balance*100 });
+                }
+            },
+            /* 退还押金 */
+            async returnCashMoney (){
+                let that = this;
+                let res = await wepy.showModal({
+                    title: '退还押金提示',
+                    content: '确认要退还押金？',
+                    confirmText: '确认退还',
+                    cancelText: '取消'
+                });
+                if (res.confirm) {
+                    that.refundDeposit();
+                } else {
+                    console.log('取消');
+                }
+            },
+            /* 提现确认 */
+            //            async extract (){
+            //                let that = this;
+            //                let res = await wepy.showModal({
+            //                    title: '提现确认',
+            //                    content: '确认要将押金与余额提现？提现可能分多笔退款到账，请耐心等待。',
+            //                    confirmText: '确认提现',
+            //                    cancelText: '取消'
+            //                });
+            //
+            //                if (res.confirm) {
+            //                    that.refundDeposit();
+            //                } else {
+            //                    console.log('取消');
+            //                }
+            //            },
+            /* 跳转 */
+            navTo(url){
+                wx.navigateTo({ url : url });
+            }
+        };
+
+        /* 查余额、押金*/
+        getBalance(){
+            let that = this;
+            request.post({
+                path: api.myWallet.queryUserInfo
+            }).then((res)=>{
+                that.deposite = (res.data.deposite/100).toFixed(2);
+                that.balance = (res.data.balance/100).toFixed(2);
+                that.$apply();
+            },(err)=>{
+            })
+        }
+        /* 获取电话号码 */
+        getConcat(){
+            const params = {
+                type: 'PARAM',
+                key:'SERVICE_TELEPHONE'
+            };
+            request.post({
+                path: api.common.queryList,
+                data: params
+            }).then((res)=>{
+                if(res.data.length){
+                    this.tel = res.data[0].value;
+                }
+            },(err)=>{
+                wepy.showModal({
+                    content: err.resultDesc,
+                    showCancel: false
+                });
+            })
+        }
+
+        /* 退还押金 */
+        refundDeposit(){
+            tips.loading("退款中...",300000000);
+            this.modalFlag = true;
+            this.$apply();
+            request.post({
+                path: api.myWallet.refundDeposit
+            }).then((res)=>{
+                tips.hide();
+                this.modalFlag = false;
+                this.$apply();
+                wx.navigateTo({ url: './extract-success?deposite='+this.deposite });
+            },(err)=>{
+                tips.hide();
+                this.modalFlag = false;
+                this.$apply();
+                if(err.resultCode == '01231010'){
+                    /* 有未完成订单 */
+                    wepy.showModal({
+                        content: err.resultDesc,
+                        showCancel: false,
+                        confirmText: '知道了'
+                    });
+                }else{
+                    /* 退款异常 */
+                    wx.showModal({
+                        title: '异常提示',
+                        content: '退押异常，是否电话联系客服？',
+                        confirmText: '联系',
+                        cancelText: '取消',
+                        success:(res)=>{
+                            if (res.confirm) {
+                                this.getConcat();
+                                wx.makePhoneCall({
+                                    phoneNumber: this.tel // tel字符串类型，不能使数字
+                                })
+                            } else {
+                                console.log('取消联系');
+                            }
+                        }
+                    });
+                }
+            })
+        };
+        async onShow(){
+            await this.$parent.auth();
+            this.getBalance();
+            this.$broadcast("waves-show");
+        };
+        onHide (){
+            this.$broadcast("waves-hide");
+        };
+        onUnload (){
+            this.$broadcast("waves-hide");
+        };
+    }
+</script>

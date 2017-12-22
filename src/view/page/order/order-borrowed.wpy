@@ -1,0 +1,268 @@
+<template>
+    <view class="borrowed_page">
+        <view class="borrowed_img">
+            <image src="../../assets/img/banner.jpg" class="borrowed_img_logo"></image>
+        </view>
+        <view class="borrowed_content">
+            <view class="mark borrowed_order_number">
+                <view class="borrowed_order_number_key">{{title.orderNumber}}</view>
+                <view class="borrowed_order_number_value">{{borrowedDetail.orderSN}}</view>
+                <view class="borrowed_order_number_status">{{borrowedDetail.status}}</view>
+            </view>
+            <view class="borrowed_imaginary_line"></view>
+            <view class="mark borrowed_rent_time">
+                <view class="borrowed_rent_time_key">{{title.rentTime}}</view>
+                <view class="borrowed_rent_time_value">{{borrowedDetail.deliveryTime}}</view>
+            </view>
+            <view class="mark borrowed_rent_site">
+                <view class="borrowed_rent_site_key">{{title.rentSite}}</view>
+                <view class="borrowed_rent_site_value">{{borrowedDetail.cabinetName}}</view>
+            </view>
+            <view class="borrowed_imaginary_line"></view>
+            <view class="mark borrowed_get_return">
+                <view class="borrowed_get_return_key">{{title.gRNumber}}</view>
+                <view class="borrowed_get_return_value">{{borrowedDetail.deliveryCode}}</view>
+            </view>
+            <view class="borrowed_imaginary_line"></view>
+            <view class="mark borrowed_utility_time">
+                <view class="borrowed_utility_time_key">{{title.utilityTime}}</view>
+                <view class="borrowed_utility_time_value">{{borrowedDetail.serviceDuration}}</view>
+            </view>
+            <view class="borrowed_imaginary_line borrowed_imaginary_top"></view>
+        </view>
+    </view>
+</template>
+<script>
+    import wepy from 'wepy'
+    import request from '../../../utils/request'
+    import CONFIG_URL from '../../../utils/config-url'
+    export default class Article extends wepy.page {
+        /* 标题 */
+        config = {
+            navigationBarTitleText: '订单详情'
+        };
+        data = {
+            title:{
+                orderNumber:"订单号码",
+                rentTime:"租借时间",
+                rentSite:"租借地点",
+                returnSite:"归还地点",
+                returnTime:"归还时间",
+                gRNumber:"取/还机码",
+                utilityTime:"使用时长",
+                rentAmount:"租金金额",
+            },
+            // 订单状态字典
+            status_dictionary:{
+                WAIT_PICKUP:'已下单',//待取货
+                WAIT_RETURN:'借用中',//待归还
+                WAIT_CHECK:'待核查',
+                FINISHED:'已完成',
+                CANCELED:'已取消',
+                ABNORMAL:'异常结束',
+            },
+            //分钟对应语言字典表
+            lan_dictionary:{
+                zh_cn:'分钟',
+                en_us:'minutes',
+                zh_hk:'分鍾'
+            },
+            borrowedDetail:{}
+        };
+        methods = {};
+        formatTime = function(timeStamp){
+            let date = new Date();
+            date.setTime(timeStamp);
+            let y = date.getFullYear();
+            let m = date.getMonth() + 1;
+            m = m < 10 ? ('0' + m) : m;
+            let d = date.getDate();
+            d = d < 10 ? ('0' + d) : d;
+            let h = date.getHours();
+            h = h < 10 ? ('0' + h) : h;
+            let minute = date.getMinutes();
+            let second = date.getSeconds();
+            minute = minute < 10 ? ('0' + minute) : minute;
+            second = second < 10 ? ('0' + second) : second;
+            return y + '-' + m + '-' + d+' '+h+':'+minute+':'+second;
+        };
+        async onLoad(option){
+            let that = this,
+                lanType = 'zh_cn',
+                data = {orderSN:option.orderSN},
+                borrowedDetail = {};
+            that.borrowedDetail = await request.post({
+                path: CONFIG_URL.order.queryOrderDetail,
+                data,
+                requiresAuth: false
+            }).then((res)=>{
+                borrowedDetail = res.data;
+                borrowedDetail.status = that.status_dictionary[borrowedDetail.status] || '';
+                borrowedDetail.cabinetName = borrowedDetail.cabinetName || '';
+                borrowedDetail.serviceDuration =  borrowedDetail.serviceDuration?(parseInt(borrowedDetail.serviceDuration/1000/60) + that.lan_dictionary[lanType]):'';
+                if(borrowedDetail.deliveryTime){
+                    borrowedDetail.deliveryTime = that.formatTime(borrowedDetail.deliveryTime);
+                }else{
+                    borrowedDetail.deliveryTime = '';
+                }
+                that.borrowedDetail = borrowedDetail;
+                that.$apply();
+            },(error)=>{
+                return error;
+            })
+        }
+    }
+</script>
+<style lang="scss">
+    .mark wx-view{
+        display: inline-block;
+    }
+    .borrowed_page{
+        width: 750rpx;
+    }
+    .borrowed_content{
+        height: 704rpx;
+        background-color: #ffffff;
+    }
+    .borrowed_img{
+        height: 500rpx;
+        width: 100%;
+    }
+    .borrowed_img_logo{
+        height: 100%;
+        width: 100%;
+    }
+    .borrowed_order_number{
+        margin-bottom: 40rpx;
+    }
+    .borrowed_imaginary_line{
+        margin-left: 30rpx;
+        box-shadow:inset 0 -1rpx 0 0 rgba(224,224,224,0.50);
+        width:720rpx;
+        height:2rpx;
+    }
+    .borrowed_order_number_key{
+        height: 28rpx;
+        margin-top: 40rpx;
+        margin-left: 44rpx;
+        font-family:PingFangSC-Regular;
+        font-size:28rpx;
+        color:#888888;
+        letter-spacing:0;
+        line-height:28rpx;
+    }
+    .borrowed_order_number_value{
+        height: 28rpx;
+        margin-top: 40rpx;
+        margin-left: 20rpx;
+        font-family:PingFangSC-Semibold;
+        font-size:28rpx;
+        color:#1e1e1e;
+        letter-spacing:0;
+        line-height:28rpx;
+    }
+    .borrowed_order_number_status{
+        height: 28rpx;
+        margin-top: 40rpx;
+        margin-right: 30rpx;
+        float: right;
+        font-family:PingFangSC-Regular;
+        font-size:28rpx;
+        color:#24dba8;
+        letter-spacing:0;
+        line-height:28rpx;
+    }
+    .borrowed_rent_time{}
+    .borrowed_rent_time_key{
+        height: 28rpx;
+        margin-top: 30rpx;
+        margin-left: 44rpx;
+        font-family:PingFangSC-Regular;
+        font-size:28rpx;
+        color:#888888;
+        letter-spacing:0;
+        line-height:28rpx;
+    }
+    .borrowed_rent_time_value{
+        height: 28rpx;
+        margin-top: 30rpx;
+        margin-left: 20rpx;
+        font-family:PingFangSC-Semibold;
+        font-size:28rpx;
+        color:#1e1e1e;
+        letter-spacing:0;
+        line-height:28rpx;
+    }
+    .borrowed_rent_site{
+        margin-bottom: 30rpx;
+    }
+    .borrowed_rent_site_key{
+        height: 28rpx;
+        margin-top: 30rpx;
+        margin-left: 44rpx;
+        font-family:PingFangSC-Regular;
+        font-size:28rpx;
+        color:#888888;
+        letter-spacing:0;
+        line-height:28rpx;
+    }
+    .borrowed_rent_site_value{
+        height: 28rpx;
+        margin-top: 30rpx;
+        margin-left: 20rpx;
+        font-family:PingFangSC-Semibold;
+        font-size:28rpx;
+        color:#1e1e1e;
+        letter-spacing:0;
+        line-height:28rpx;
+    }
+    .borrowed_get_return{
+        margin-bottom: 40rpx;
+    }
+    .borrowed_get_return_key{
+        height: 28rpx;
+        margin-top: 40rpx;
+        margin-left: 30rpx;
+        font-family:PingFangSC-Regular;
+        font-size:28rpx;
+        color:#888888;
+        letter-spacing:0;
+        line-height:28rpx;
+    }
+    .borrowed_get_return_value{
+        height: 28rpx;
+        margin-top: 40rpx;
+        margin-left: 20rpx;
+        font-family:PingFangSC-Semibold;
+        font-size:28rpx;
+        color:#1e1e1e;
+        letter-spacing:0;
+        line-height:28rpx;
+    }
+    .borrowed_utility_time{
+        margin-bottom: 30rpx;
+    }
+    .borrowed_utility_time_key{
+        height: 28rpx;
+        margin-top: 30rpx;
+        margin-left: 44rpx;
+        font-family:PingFangSC-Regular;
+        font-size:28rpx;
+        color:#888888;
+        letter-spacing:0;
+        line-height:28rpx;
+    }
+    .borrowed_utility_time_value{
+        height: 28rpx;
+        margin-top: 30rpx;
+        margin-left: 20rpx;
+        font-family:PingFangSC-Semibold;
+        font-size:28rpx;
+        color:#1e1e1e;
+        letter-spacing:0;
+        line-height:28rpx;
+    }
+    .borrowed_imaginary_top{
+        margin-top: 30rpx;
+    }
+</style>

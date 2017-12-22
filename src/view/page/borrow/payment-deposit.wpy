@@ -1,0 +1,97 @@
+<!--
+    支付押金
+    cheng.feng 2017/11/20
+ -->
+ <style lang="css" src="./style.css"></style>
+
+ <template>
+     <view class="bg-white mb18 deposit">
+         <view class="p-money">￥{{ amount }}</view>
+         <view class="p-tips mb80">支付押金</view>
+         <view class="p-text">第一次使用需要缴纳押金，归还核查后可随时提现。</view>
+     </view>
+     <view class="bg-white mb100">
+         <view class="payment-select">
+             <image class="p-wechat" src="../../assets/img/wechat.png"></image>
+             <text>微信支付</text>
+             <image class="p-selected" src="../../assets/img/checked.png"></image>
+         </view>
+     </view>
+     <view class="footer-button">
+         <button type="primary" class="btn-confirm" @tap="btn" loading="{{loading}}">确认支付</button>
+     </view>
+ </template>
+
+ <script>
+ import wepy from 'wepy';
+ import http from '../../../utils/request';
+ import api from '../../../utils/config-url';
+ import payment from '../common/payment';
+
+ export default class extends wepy.page {
+     config = {
+         navigationBarTitleText: '押金充值'
+     };
+     data = {
+         loading: false,
+         pageState: "show",
+         amount: 0
+     };
+     methods = {
+         btn: function () {
+             let that = this;
+             if (that.loading) return;
+
+             that.loading = true;
+             payment.payment({
+                 rechargeType: "DEPOSIT",   // 押金
+                 amount: that.amount * 100
+             }).then(d => {
+                 that.loading = false;
+                 wx.showModal({
+                     content: "充值成功，金额可能延迟到账，请耐心等待。如有疑问，请联系客服。",
+                     showCancel: false,
+                     complete() {
+                         wx.navigateBack({ delta: that.delta });
+                     }
+                 });
+
+                 // wx.reLaunch({ url: '../personalCenter/index' });
+             }, d => {
+                 if (that.pageState === "show") {
+                     wx.showModal({
+                         content: '充值失败',
+                         showCancel: false
+                     });
+                 }
+                 that.loading = false;
+                 that.$apply();
+             });
+         }
+     };
+     onLoad = function (params) {
+         this.delta = Number(params.delta) || 1;
+
+         let receivableDeposit = this.$parent.globalData.receivableDeposit;
+         if(receivableDeposit){
+             this.amount = (receivableDeposit / 100).toFixed(2);
+             this.$apply();
+         }else{
+             http.post({
+                 path: api.common.queryList,
+                 data: { type: "PARAM", key: "DEPOSIT" } // 获取应交押金
+             }).then( d=>{
+                 this.$parent.globalData.receivableDeposit = d.data[0].value * 100;
+                 this.amount = d.data[0].value;
+                 this.$apply();
+             });
+         }
+     };
+     onShow() {
+         this.pageState = "show";
+     };
+     onHide() {
+         this.pageState = "hide";
+     };
+ };
+ </script>

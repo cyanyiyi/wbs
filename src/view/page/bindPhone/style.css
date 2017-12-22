@@ -1,0 +1,85 @@
+@charset "utf-8";
+.bind-phone{
+	width: 100%;
+	background: #ffffff;
+	padding-bottom: 100rpx;
+}
+.phone-pic image{
+	width: 100%;
+	height: 300rpx;
+}
+.bind-phone .form-data{
+	padding:0 30rpx;
+}
+.form-data .form-control{
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	border-bottom: 2rpx solid rgba(224,224,224,0.50);
+	padding: 52rpx 0rpx 30rpx 0rpx;
+}
+/*.comm-pd{
+	padding: 52rpx 0rpx 30rpx 0rpx;
+}*/
+.form-data .form-control input{
+	font-size: 32rpx;
+	color:#1e1e1e;
+	letter-spacing:0;
+	line-height:32rpx;
+	flex: 1;
+}
+.form-data .tel .get-captcha{
+	font-size:28rpx;
+	letter-spacing:0;
+	line-height:28rpx;
+	text-align: center;
+}
+.tel-tips{
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+.form-control image{
+	width: 32rpx;
+	height:32rpx;
+	margin-right: 34rpx;
+	cursor: pointer;
+}
+.form-control.captcha image{
+	margin-right: 0;
+}
+button[type="primary"] {
+	width:100%;
+	background:#24dba8;
+	border-radius:6rpx;
+	height: 100rpx;
+	width: 100%;
+	font-family:PingFangSC-Regular;
+	font-size:36rpx;
+	color:rgba(255, 255, 255, .8);
+	letter-spacing:0;
+	line-height:100rpx;
+	text-align:center;
+}
+.captcha .captcha-wrap{
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	width: 150rpx;
+}
+.form-control.submit-btn{
+	padding-top: 82rpx;
+	border-bottom: 0;
+}
+.check{
+	color:#24dba8;
+}
+.normal {
+	color:#888888;
+}
+button.sendCheck {
+	color:#fff;
+}
+.hide{
+	display: none;
+}

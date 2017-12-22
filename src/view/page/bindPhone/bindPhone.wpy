@@ -1,0 +1,238 @@
+<!--
+    绑定手机
+    liuxuetao 2017/11/29
+ -->
+<style lang="css" src="./style.css"></style>
+<style lang="scss">
+    page {
+        background-color: #ffffff;
+        box-sizing: border-box;
+    }
+</style>
+<template>
+    <view class="bind-phone">
+        <view class="phone-pic">
+            <image src="{{ images.top }}"></image>
+        </view>
+        <view class="form-data">
+            <view class='form-control tel'>
+                <input type="tel" name="tel" placeholder="{{ i18n.tel }}" autofocus="true" bindinput="inputTel" value="{{ tel }}"/>
+                <view class="tel-tips">
+                    <image src="{{ images.del }}" bindtap="clear" hidden="{{ delHide }}"></image>
+                    <view class="get-captcha" bindtap="getCaptcha" class="{{ unvalid?'normal get-captcha':'check get-captcha'}}" style="width:{{addClass?'150rpx':'auto'}};font-size: {{addClass?'36rpx':'28rpx'}};">{{ info }}</view>
+                </view>
+            </view>
+            <view class='form-control captcha'>
+                <input type="text" name="captcha" placeholder="{{ i18n.captcha }}" value="{{captcha}}" bindinput="inputCaptcha"/>
+                <view class="captcha-wrap" class="{{ captchaHide?'hide':'captcha-wrap'}}" bindtap="clearCaptcha">
+                    <image src="{{ images.del }}"></image>
+                </view>
+            </view>
+            <view class="form-control submit-btn">
+                <button type="primary" class="{{ isSend?'sendCheck':''}}" bindtap="changeBind">{{ i18n.bindPhone}}</button>
+            </view>
+        </view>
+    </view>
+</template>
+
+<script>
+import wepy from 'wepy';
+import request from '../../../utils/request';
+import CONFIG_URL from '../../../utils/config-url';
+import storage from '../../../utils/storage';
+let timer = null;
+export default class BindPhone extends wepy.page {
+    config = {
+        navigationBarTitleText: '手机绑定'
+    };
+    data = {
+        tel:'',
+        captcha:'',
+        info:'',
+        images:{
+            top:'../../assets/img/bindPhone.png',
+            del:'../../assets/img/delete.png'
+        },
+        i18n:{
+            tel:'手机号码',
+            captcha:'验证码',
+            getCaptcha:'获取验证码',
+            bindPhone:'绑定手机',
+            getAagin:'重获验证码',
+            errorTel:'您输入的手机号码不正确',
+            errorCaptcha:'您输入的验证码不正确'
+        },
+        delHide:true,
+        captchaHide: true,
+        unvalid:true,
+        isSend:false,
+        addClass:false,
+        url:CONFIG_URL.bindPhone.register,
+        urlCaptcha:CONFIG_URL.bindPhone.regSend,
+        hasSend:false,
+        type:'register',//方式 默认注册
+        registerLocation:'../home/network-list',
+        changeLocation:'../personalCenter/index',
+        location:'../home/network-list'
+    };
+    watch = {
+        info:function(nval,oval){
+            if(nval && nval.length<4){
+                this.addClass = true;
+            }else{
+                this.addClass = false;
+            }
+        }
+    };
+    computed = {
+        isSend(){
+            return !this.unvalid && this.captcha.length;
+        }
+    };
+    methods = {
+        inputTel(e){
+            let pattern = /^1[34578]\d{9}$/;
+            this.tel = e.detail.value;
+            if(this.tel.length){
+                this.delHide = false;
+                if(pattern.test(this.tel)){
+                    this.unvalid = false;
+                }else{
+                    this.unvalid = true;
+                }
+            }else{
+                this.delHide = true;
+                this.unvalid = true;
+            }
+        },
+        inputCaptcha(e){
+            this.captcha = e.detail.value;
+             if(this.captcha.length){
+                this.captchaHide = false;
+            }else{
+                this.captchaHide = true;
+            }
+        },
+        async getCaptcha(){
+            if(this.tel.length == 0){
+                return false;
+            }
+            if(this.unvalid){
+                let res = await wepy.showModal({
+                    content: this.i18n.errorTel,
+                    showCancel: false
+                });
+                return false;
+            }
+            if(this.hasSend && !this.unvalid){
+                return false;
+            }
+            this.sendCaptcha();
+        },
+        clear(){
+            this.tel = '';
+            this.delHide = true;
+            this.unvalid = true;
+
+        },
+        clearCaptcha(){
+            this.captcha = '';
+            this.captchaHide = true;
+        },
+        changeBind(){
+            if(!this.isSend){
+                return false;
+            }
+            this.changePhone();
+        }
+    };
+    interval(){
+        this.hasSend = true;
+        let count = 60;
+        timer = setInterval(()=>{
+            count--;
+            this.info = count+'s';
+            if(count <= 0){
+                clearInterval(timer);
+                this.info = this.i18n.getAagin;
+                this.hasSend = false;
+            }
+            this.$apply();
+        }, 1000);
+    };
+    sendCaptcha(){
+        this.interval();
+        const params = {
+            mobilePhone: this.tel,
+        };                  
+        request.post({                     
+          path: this.urlCaptcha, 
+          data: params,
+          requiresAuth: false
+        }).then((res)=>{
+            this.delHide = true;    
+        },(err)=>{
+            clearInterval(timer);
+            this.info = this.i18n.getAagin;
+            this.hasSend = false;
+            this.$apply();
+            wepy.showModal({
+                content: err.resultDesc,
+                showCancel: false
+            });
+            return ;
+        })
+    };
+    changePhone(){
+        let params = {
+            mobilePhone: this.tel,
+            msgCode: this.captcha,
+        };
+        let user = storage.user.get();
+        if(this.type == 'register'){
+            //注册增加用户名，头像
+            params = Object.assign({},params,{
+                weChatName: user.weChatName,
+                avatarUrl: user.avatarUrl
+            })
+        }             
+        request.post({                     
+          path: this.url, 
+          data: params,
+          requiresAuth: false
+        }).then((res)=>{
+            wx.showToast({
+                title: res.resultDesc,
+                icon: 'success',
+                duration: 2000
+            });
+            //保存手机号
+            storage.user.set(Object.assign(user,{mobilePhone:this.tel}));
+            if(timer){
+                clearInterval(timer);
+            }
+            //wx.navigateBack();
+            wx.redirectTo({ url : this.location });
+        },(err)=>{
+            wepy.showModal({
+                content: err.resultDesc,
+                showCancel: false
+            });
+            return ;
+        })
+    }
+    onLoad(options){
+        //判断是绑定还是换绑
+        if(options.type == 'change'){
+            this.type = options.type;
+            this.url = CONFIG_URL.bindPhone.change;
+            this.urlCaptcha = CONFIG_URL.bindPhone.send;
+            this.location = this.changeLocation;
+        }
+        this.info = this.i18n.getCaptcha;
+    }
+    onUnload(){
+        clearInterval(timer);
+    }    
+};
+</script>

@@ -1,0 +1,110 @@
+<!--
+    我的钱包-水波
+    cheng.feng 2017/12/4
+ -->
+ <template>
+    <canvas style="width: {{width}}rpx; height: {{height}}rpx" canvas-id="waves"></canvas>
+</template>
+
+<script>
+import wepy from 'wepy';
+
+// const dpr = devicePixelRatio || 1;
+
+// 波长, 振幅, 颜色, 透明度
+var Wave = function(wavelength, amplitude, color, opacity){
+	this.x = Math.random() * -100;
+	this.y = 0;
+	this.wavelength = wavelength;
+	this.amplitude = amplitude;
+	this.fillStyle = color || "#2b9ce8";
+	this.globalAlpha = opacity || 0.5;
+};
+Wave.prototype = {
+	draw : function(ctx, w, h){
+		ctx.setGlobalAlpha(1);
+		this.y = h - this.amplitude;
+        ctx.beginPath();
+		ctx.moveTo(this.x, this.y);
+
+		var time = 0;
+		while(time < Math.ceil(w / this.wavelength) + 2){
+			this.singleWave(ctx, this.x + time * this.wavelength, this.y);
+			time++;
+        }
+
+		ctx.lineTo(this.wavelength*4 + this.x + this.wavelength, h);
+		ctx.lineTo(this.x, h);
+		ctx.closePath();
+		ctx.setFillStyle(this.fillStyle);
+		ctx.setGlobalAlpha(this.globalAlpha);
+		ctx.fill();
+	},
+	singleWave : function(ctx, x, y){
+		var wavelength = this.wavelength;
+		var amplitude = this.amplitude;
+		// 小程序的translate()有bug
+		ctx.quadraticCurveTo(wavelength/8 + x, amplitude + y, wavelength/4 + x, amplitude + y);
+		ctx.quadraticCurveTo(wavelength/8*3 + x, amplitude + y, wavelength/2 + x, y);
+		ctx.quadraticCurveTo(wavelength/8*5 + x, -amplitude + y, wavelength/8*6 + x, -amplitude + y);
+		ctx.quadraticCurveTo(wavelength/8*7 + x, -amplitude + y, wavelength + x, y);
+	}
+};
+
+export default class extends wepy.component {
+    props = {
+        width : String,
+        height : String
+    };
+    data = {
+        isrun : false
+    };
+    events = {
+        "waves-show" (){
+            if(!this.isrun) this.run();
+        },
+        "waves-hide" (){
+            clearTimeout(this.tid);
+            this.isrun = false;
+        }
+    };
+    run (){
+        let that = this;
+        var animate = function(){
+            that.waves.forEach( (wave, i) => {
+                wave.draw(that.ctx, that.w, that.h);
+                wave.x -= 2 + i;
+                if(Math.abs(wave.x) >= wave.wavelength) wave.x = 0;
+            });
+            // 小程序不支持requestAnimationFrame
+            that.tid = setTimeout(animate, 16);
+            that.ctx.draw();
+        };
+        that.tid = setTimeout(animate, 16)
+        that.isrun = true;
+    };
+    onLoad(){
+        let that = this;
+
+        var waveInit = function(){
+            that.ctx = wx.createCanvasContext('waves');
+            that.waves = [
+                new Wave(400, 17, "#ffffff", 0.6),
+                new Wave(430, 12, "#ffffff", 0.6),
+                new Wave(460, 9, "#ffffff", 0.6)
+            ];
+            if(!that.isrun) that.run();
+        };
+        wx.getSystemInfo({
+            success: function (res) {
+                that.w = res.windowWidth;
+                that.h = that.w/750 * that.height;
+
+                waveInit();
+            }
+        });
+    }
+}
+</script>
+<style>
+</style>

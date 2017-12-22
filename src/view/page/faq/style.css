@@ -1,0 +1,75 @@
+@charset "utf-8";
+.faq-page{
+	width: 100%;
+	background: #fff;
+	padding-bottom: 100rpx;
+}
+.faq-list{
+	padding-left: 24rpx;
+}
+.faq-item{
+	box-sizing: border-box;
+}
+.item-t {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding:36rpx 18rpx 36rpx 0;
+}
+.item-t image{
+	width: 23rpx;
+	height: 23rpx;
+}
+.item-t text{
+	font-size: 28rpx;
+	color:#1e1e1e;
+	letter-spacing:0;
+	line-height:28rpx;
+}
+.item-line{
+	margin-left: 6rpx;
+	border-top: 2rpx solid rgba(224, 224, 224, .5);
+}
+.item-con{
+	border-bottom: 2rpx solid rgba(224, 224, 224, .5);
+	padding:24rpx 34rpx 24rpx 0;
+	font-size:26rpx;
+	color:#888888;
+	letter-spacing:-0.63px;
+	line-height:48rpx;
+	text-align:justify
+}
+.faq-page .footer{
+	display: flex;
+	position: fixed;
+	z-index: 999;
+	left: 0;
+	bottom: 0;
+	width:100%;
+	height: 100rpx;
+	border-top: 2rpx solid rgba(224, 224, 224, .5);
+	align-items: center;
+	justify-content: center;
+	background:#ffffff;
+}
+.footer .footer-wrap{
+	width:100%;
+	height: 100%;
+}
+.footer .footer-wrap .tel-btn{
+	width: 100%;
+	display: flex;
+	height: 100%;
+	align-items: center;
+	justify-content: center;
+}
+.footer-wrap image{
+	width: 28rpx;
+	height: 28rpx;
+}
+.footer-wrap text{
+	font-size: 28rpx;
+	color:#888888;
+	letter-spacing:-0.68px;
+	padding-left:10rpx;
+}
